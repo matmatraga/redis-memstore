@@ -1,56 +1,155 @@
 // server/network/commandRouter.js
 
-const store = require('../core/datastore');
+const store = require("../core/datastore");
+const strings = require("../core/types/strings");
 
-module.exports = function routeCommand({ command, args }) {
+function parseArgs(input) {
+  const matches = input.match(/"[^"]*"|\S+/g) || [];
+  return matches.map((token) =>
+    token.startsWith('"') && token.endsWith('"') ? token.slice(1, -1) : token
+  );
+}
+
+module.exports = function routeCommandRaw(input) {
+  const [commandRaw, ...rest] = parseArgs(input);
+  const command = commandRaw?.toUpperCase();
+  const args = rest;
+
   switch (command) {
-    case 'SET': {
-      const [key, ...rest] = args;
-      if (!key || rest.length === 0) return 'ERR wrong number of arguments for SET';
-      const value = rest.join(' ');
+    case "SET": {
+      const [key, ...valueParts] = args;
+      if (!key || valueParts.length === 0)
+        return "ERR wrong number of arguments for SET";
+      const value = valueParts.join(" ");
       return store.set(key, value);
     }
 
-    case 'GET': {
+    case "GET": {
       const [key] = args;
-      if (!key) return 'ERR wrong number of arguments for GET';
+      if (!key) return "ERR wrong number of arguments for GET";
       const result = store.get(key);
-      return result !== null ? result : '(nil)';
+      return result !== null ? `"${result}"` : "(nil)";
     }
 
-    case 'EXISTS': {
+    case "EXISTS": {
       const [key] = args;
-      if (!key) return 'ERR wrong number of arguments for EXISTS';
-      return store.exists(key);
+      if (!key) return "ERR wrong number of arguments for EXISTS";
+      return store.has(key) ? 1 : 0;
     }
 
-    case 'DEL': {
+    case "DEL": {
       const [key] = args;
-      if (!key) return 'ERR wrong number of arguments for DEL';
+      if (!key) return "ERR wrong number of arguments for DEL";
       return store.del(key);
     }
 
-    case 'EXPIRE': {
+    case "EXPIRE": {
       const [key, secondsStr] = args;
-      if (!key || !secondsStr) return 'ERR wrong number of arguments for EXPIRE';
+      if (!key || !secondsStr)
+        return "ERR wrong number of arguments for EXPIRE";
       const seconds = parseInt(secondsStr, 10);
-      if (isNaN(seconds) || seconds < 0) return 'ERR invalid expiration time';
+      if (isNaN(seconds) || seconds < 0) return "ERR invalid expiration time";
       return store.expire(key, seconds);
     }
 
-    case 'TTL': {
+    case "TTL": {
       const [key] = args;
-      if (!key) return 'ERR wrong number of arguments for TTL';
+      if (!key) return "ERR wrong number of arguments for TTL";
       return store.ttl(key);
     }
 
-    case 'PERSIST': {
+    case "PERSIST": {
       const [key] = args;
-      if (!key) return 'ERR wrong number of arguments for PERSIST';
+      if (!key) return "ERR wrong number of arguments for PERSIST";
       return store.persist(key);
     }
 
+    case "APPEND": {
+      const [key, value] = args;
+      if (!key || value === undefined)
+        return "ERR wrong number of arguments for APPEND";
+      try {
+        return strings.append(store, key, value);
+      } catch (err) {
+        return `ERR ${err.message}`;
+      }
+    }
+
+    case "STRLEN": {
+      const [key] = args;
+      if (!key) return "ERR wrong number of arguments for STRLEN";
+      try {
+        return strings.strlen(store, key);
+      } catch (err) {
+        return `ERR ${err.message}`;
+      }
+    }
+
+    case "INCR": {
+      const [key] = args;
+      if (!key) return "ERR wrong number of arguments for INCR";
+      try {
+        return strings.incr(store, key);
+      } catch (err) {
+        return `ERR ${err.message}`;
+      }
+    }
+
+    case "DECR": {
+      const [key] = args;
+      if (!key) return "ERR wrong number of arguments for DECR";
+      try {
+        return strings.decr(store, key);
+      } catch (err) {
+        return `ERR ${err.message}`;
+      }
+    }
+
+    case "INCRBY": {
+      const [key, value] = args;
+      if (!key || value === undefined)
+        return "ERR wrong number of arguments for INCRBY";
+      try {
+        return strings.incrby(store, key, parseInt(value));
+      } catch (err) {
+        return `ERR ${err.message}`;
+      }
+    }
+
+    case "DECRBY": {
+      const [key, value] = args;
+      if (!key || value === undefined)
+        return "ERR wrong number of arguments for DECRBY";
+      try {
+        return strings.incrby(store, key, -parseInt(value));
+      } catch (err) {
+        return `ERR ${err.message}`;
+      }
+    }
+
+    case "GETRANGE": {
+      const [key, start, end] = args;
+      if (!key || start === undefined || end === undefined)
+        return "ERR wrong number of arguments for GETRANGE";
+      try {
+        return strings.getrange(store, key, parseInt(start), parseInt(end));
+      } catch (err) {
+        return `ERR ${err.message}`;
+      }
+    }
+
+    case "SETRANGE": {
+      const [key, offset, subStr] = args;
+      if (!key || offset === undefined || subStr === undefined)
+        return "ERR wrong number of arguments for SETRANGE";
+      try {
+        return strings.setrange(store, key, parseInt(offset), subStr);
+      } catch (err) {
+        return `ERR ${err.message}`;
+      }
+    }
+
     default:
-      return `ERR unknown command '${command}'`;
+      return `ERR unknown command '${commandRaw}'`;
   }
 };
