@@ -2,19 +2,8 @@
 
 const store = require("../core/datastore");
 const strings = require("../core/types/strings");
-
-function parseArgs(input) {
-  const matches = input.match(/"[^"]*"|\S+/g) || [];
-  return matches.map((token) =>
-    token.startsWith('"') && token.endsWith('"') ? token.slice(1, -1) : token
-  );
-}
-
-module.exports = function routeCommandRaw(input) {
-  const [commandRaw, ...rest] = parseArgs(input);
-  const command = commandRaw?.toUpperCase();
-  const args = rest;
-
+const json = require("../core/types/json");
+module.exports = function routeCommandRaw({ command, args }) {
   switch (command) {
     case "SET": {
       const [key, ...valueParts] = args;
@@ -147,6 +136,33 @@ module.exports = function routeCommandRaw(input) {
       } catch (err) {
         return `ERR ${err.message}`;
       }
+    }
+
+    case "JSON.SET": {
+      const [key, path, ...valueParts] = args;
+      const valueStr = valueParts.join(" ");
+      return json.set(store, key, path, valueStr);
+    }
+
+    case "JSON.GET": {
+      const [key, path] = args;
+      if (!key) return "ERR wrong number of arguments for JSON.GET";
+      return json.get(store, key, path);
+    }
+
+    case "JSON.DEL": {
+      const [key, path] = args;
+      if (!key) return "ERR wrong number of arguments for JSON.DEL";
+      return json.del(store, key, path);
+    }
+
+    case "JSON.ARRAPPEND": {
+      const [key, path, ...values] = args;
+      if (!key || !path || values.length === 0) {
+        return "ERR wrong number of arguments for 'JSON.ARRAPPEND'";
+      }
+
+      return json.arrappend(store, key, path, ...values);
     }
 
     default:
