@@ -32,7 +32,7 @@ class DataStore {
   set(key, value) {
     this._isExpired(key); // clean up if expired
     this.store.set(key, value);
-    return 'OK';
+    return "OK";
   }
 
   get(key) {
@@ -69,6 +69,11 @@ class DataStore {
     if (!this.store.has(key)) return 0;
     const removed = this.expirations.delete(key);
     return removed ? 1 : 0;
+  }
+
+  has(key) {
+    if (this._isExpired(key)) return false;
+    return this.store.has(key);
   }
 }
 
