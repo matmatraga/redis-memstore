@@ -3,6 +3,7 @@
 const store = require("../core/datastore");
 const strings = require("../core/types/strings");
 const json = require("../core/types/json");
+const list = require("../core/types/lists");
 module.exports = function routeCommandRaw({ command, args }) {
   switch (command) {
     case "SET": {
@@ -163,6 +164,90 @@ module.exports = function routeCommandRaw({ command, args }) {
       }
 
       return json.arrappend(store, key, path, ...values);
+    }
+
+    case "LPUSH": {
+      const [key, ...values] = args;
+      if (!key || values.length === 0)
+        return "ERR wrong number of arguments for LPUSH";
+      try {
+        return list.lpush(store, key, ...values);
+      } catch (err) {
+        return `ERR ${err.message}`;
+      }
+    }
+
+    case "RPUSH": {
+      const [key, ...values] = args;
+      if (!key || values.length === 0)
+        return "ERR wrong number of arguments for RPUSH";
+      try {
+        return list.rpush(store, key, ...values);
+      } catch (err) {
+        return `ERR ${err.message}`;
+      }
+    }
+
+    case "LPOP": {
+      const [key] = args;
+      if (!key) return "ERR wrong number of arguments for LPOP";
+      try {
+        const value = list.lpop(store, key);
+        return value === null ? "(nil)" : `"${value}"`;
+      } catch (err) {
+        return `ERR ${err.message}`;
+      }
+    }
+
+    case "RPOP": {
+      const [key] = args;
+      if (!key) return "ERR wrong number of arguments for RPOP";
+      try {
+        const value = list.rpop(store, key);
+        return value === null ? "(nil)" : `"${value}"`;
+      } catch (err) {
+        return `ERR ${err.message}`;
+      }
+    }
+
+    case "LRANGE": {
+      const [key, start, stop] = args;
+      if (!key || start === undefined || stop === undefined)
+        return "ERR wrong number of arguments for LRANGE";
+      try {
+        const result = list.lrange(store, key, start, stop);
+        if (result.length === 0) return "(empty array)";
+        return result.map((item, i) => `${i + 1}) "${item}"`).join("\n");
+      } catch (err) {
+        return `ERR ${err.message}`;
+      }
+    }
+
+    case "LINDEX": {
+      const [key, indexStr] = args;
+      if (!key || indexStr === undefined)
+        return "ERR wrong number of arguments for LINDEX";
+      const index = parseInt(indexStr);
+      if (isNaN(index)) return "ERR index is not an integer";
+      try {
+        const result = list.lindex(store, key, index);
+        return result === null ? "(nil)" : `"${result}"`;
+      } catch (err) {
+        return `ERR ${err.message}`;
+      }
+    }
+
+    case "LSET": {
+      const [key, indexStr, value] = args;
+      if (!key || indexStr === undefined || value === undefined)
+        return "ERR wrong number of arguments for LSET";
+      const index = parseInt(indexStr);
+      if (isNaN(index)) return "ERR index is not an integer";
+      try {
+        return list.lset(store, key, index, value);
+      } catch (err) {
+        return `ERR ${err.message}`;
+      }
     }
 
     default:
