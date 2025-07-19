@@ -13,7 +13,8 @@ function startServer() {
   rl.prompt();
 
   rl.on("line", (input) => {
-    const result = routeCommand(input);
+    const parsed = commandParser(input);
+    const result = routeCommand(parsed);
     console.log(result);
     rl.prompt();
   }).on("close", () => {
