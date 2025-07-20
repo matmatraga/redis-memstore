@@ -75,6 +75,11 @@ class DataStore {
     if (this._isExpired(key)) return false;
     return this.store.has(key);
   }
+
+  flush() {
+    this.store.clear();
+    this.expirations.clear();
+  }
 }
 
 module.exports = new DataStore();
