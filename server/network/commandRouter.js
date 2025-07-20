@@ -9,6 +9,7 @@ const hashes = require("../core/types/hashes");
 const sortedSets = require("../core/types/sortedSets");
 const streams = require("../core/types/streams");
 const bitmaps = require("../core/types/bitmaps");
+const geo = require("../core/types/geospatial");
 module.exports = function routeCommandRaw({ command, args }) {
   switch (command) {
     case "SET": {
@@ -689,6 +690,58 @@ module.exports = function routeCommandRaw({ command, args }) {
       const op = opRaw.toUpperCase();
       try {
         return bitmaps.bitop(store, op, destKey, ...srcKeys);
+      } catch (err) {
+        return `ERR ${err.message}`;
+      }
+    }
+
+    // Geospatial Block
+    case "GEOADD": {
+      const [key, lonStr, latStr, member] = args;
+      if (!key || !lonStr || !latStr || !member)
+        return "ERR wrong number of arguments for GEOADD";
+
+      const lon = parseFloat(lonStr);
+      const lat = parseFloat(latStr);
+      if (isNaN(lon) || isNaN(lat)) return "ERR invalid longitude or latitude";
+
+      try {
+        return geo.geoadd(store, key, lon, lat, member);
+      } catch (err) {
+        return `ERR ${err.message}`;
+      }
+    }
+
+    case "GEODIST": {
+      const [key, m1, m2, unit = "m"] = args;
+      if (!key || !m1 || !m2)
+        return "ERR wrong number of arguments for GEODIST";
+
+      try {
+        const result = geo.geodist(store, key, m1, m2, unit);
+        return result !== null ? result : null;
+      } catch (err) {
+        return `ERR ${err.message}`;
+      }
+    }
+
+    case "GEOSEARCH": {
+      const [key, fromKeyword, fromMember, byKeyword, radiusStr, unit = "m"] =
+        args;
+      if (
+        !key ||
+        fromKeyword !== "FROMMEMBER" ||
+        !fromMember ||
+        byKeyword !== "BYRADIUS" ||
+        !radiusStr
+      )
+        return "ERR syntax error";
+
+      const radius = parseFloat(radiusStr);
+      if (isNaN(radius)) return "ERR invalid radius";
+
+      try {
+        return geo.geosearch(store, key, fromMember, radius, unit);
       } catch (err) {
         return `ERR ${err.message}`;
       }
