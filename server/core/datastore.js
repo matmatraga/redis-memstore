@@ -58,6 +58,9 @@ class DataStore {
   }
 
   ttl(key) {
+    if (!this.store.has(key)) return -2; // Key doesn't exist at all
+    if (this._isExpired(key)) return -2; // Key exists but is expired
+    if (!this.expirations.has(key)) return -1; // Key exists but no expiration
     if (this._isExpired(key)) return -2;
     if (!this.expirations.has(key)) return -1;
 
