@@ -74,7 +74,9 @@ function get(store, key, path = "$") {
   if (data === null) return null;
 
   try {
-    return JSON.stringify(pathUtil.evaluatePath(data, path));
+    const result = pathUtil.evaluatePath(data, path);
+    if (typeof result === "undefined") throw new Error();
+    return JSON.stringify(result);
   } catch {
     return "ERR invalid path";
   }
@@ -91,18 +93,24 @@ function arrappend(store, key, path, ...elements) {
 
   let target;
   try {
-    target = pathUtil.evaluatePath(data, path, true); // enable reference mode
+    target = pathUtil.evaluatePath(data, path, true);
   } catch {
     return "ERR invalid path";
   }
 
-  if (!Array.isArray(target)) return "ERR path must point to an array";
+  if (target === undefined) {
+    return "ERR invalid path";
+  }
+
+  if (!Array.isArray(target)) {
+    return "ERR path must point to an array";
+  }
 
   const parsedElements = elements.map((el) => {
     try {
       return JSON.parse(el);
     } catch {
-      return el; // allow primitives as-is (e.g., numbers)
+      return el;
     }
   });
 
