@@ -8,6 +8,7 @@ const sets = require("../core/types/sets");
 const hashes = require("../core/types/hashes");
 const sortedSets = require("../core/types/sortedSets");
 const streams = require("../core/types/streams");
+const bitmaps = require("../core/types/bitmaps");
 module.exports = function routeCommandRaw({ command, args }) {
   switch (command) {
     case "SET": {
@@ -623,6 +624,71 @@ module.exports = function routeCommandRaw({ command, args }) {
         return "ERR wrong number of arguments for XACK";
       try {
         return streams.xack(store, key, group, ...ids);
+      } catch (err) {
+        return `ERR ${err.message}`;
+      }
+    }
+
+    case "SETBIT": {
+      const [key, offsetStr, bitStr] = args;
+      if (!key || offsetStr === undefined || bitStr === undefined)
+        return "ERR wrong number of arguments for SETBIT";
+
+      const offset = parseInt(offsetStr, 10);
+      const bit = parseInt(bitStr, 10);
+
+      if (isNaN(offset) || offset < 0)
+        return "ERR bit offset is not an integer or out of range";
+      if (bit !== 0 && bit !== 1) return "ERR bit is not 0 or 1";
+
+      try {
+        return bitmaps.setbit(store, key, offset, bit);
+      } catch (err) {
+        return `ERR ${err.message}`;
+      }
+    }
+
+    case "GETBIT": {
+      const [key, offsetStr] = args;
+      if (!key || offsetStr === undefined)
+        return "ERR wrong number of arguments for GETBIT";
+
+      const offset = parseInt(offsetStr, 10);
+      if (isNaN(offset) || offset < 0)
+        return "ERR bit offset is not an integer or out of range";
+
+      try {
+        return bitmaps.getbit(store, key, offset);
+      } catch (err) {
+        return `ERR ${err.message}`;
+      }
+    }
+
+    case "BITCOUNT": {
+      const [key, startStr, endStr] = args;
+      if (!key) return "ERR wrong number of arguments for BITCOUNT";
+
+      try {
+        if (startStr !== undefined && endStr !== undefined) {
+          const start = parseInt(startStr, 10);
+          const end = parseInt(endStr, 10);
+          return bitmaps.bitcount(store, key, start, end);
+        } else {
+          return bitmaps.bitcount(store, key);
+        }
+      } catch (err) {
+        return `ERR ${err.message}`;
+      }
+    }
+
+    case "BITOP": {
+      const [opRaw, destKey, ...srcKeys] = args;
+      if (!opRaw || !destKey || srcKeys.length === 0)
+        return "ERR wrong number of arguments for BITOP";
+
+      const op = opRaw.toUpperCase();
+      try {
+        return bitmaps.bitop(store, op, destKey, ...srcKeys);
       } catch (err) {
         return `ERR ${err.message}`;
       }
