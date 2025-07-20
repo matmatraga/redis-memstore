@@ -7,6 +7,7 @@ const list = require("../core/types/lists");
 const sets = require("../core/types/sets");
 const hashes = require("../core/types/hashes");
 const sortedSets = require("../core/types/sortedSets");
+const streams = require("../core/types/streams");
 module.exports = function routeCommandRaw({ command, args }) {
   switch (command) {
     case "SET": {
@@ -497,6 +498,131 @@ module.exports = function routeCommandRaw({ command, args }) {
         const result = sortedSets.zrangebyscore(store, key, min, max);
         if (result.length === 0) return "(empty array)";
         return result.map((val, i) => `${i + 1}) "${val}"`).join("\n");
+      } catch (err) {
+        return `ERR ${err.message}`;
+      }
+    }
+
+    // STREAMS
+    case "XADD": {
+      const [key, id, ...fieldValues] = args;
+      if (!key || !id || fieldValues.length % 2 !== 0) {
+        return "ERR wrong number of arguments for XADD";
+      }
+
+      try {
+        return streams.xadd(store, key, id, ...fieldValues);
+      } catch (err) {
+        return `ERR ${err.message}`;
+      }
+    }
+
+    case "XRANGE": {
+      const [key, start, end] = args;
+      if (!key || start === undefined || end === undefined)
+        return "ERR wrong number of arguments for XRANGE";
+
+      try {
+        const result = streams.xrange(store, key, start, end);
+        if (!result || result.length === 0) return "(empty array)";
+        return result
+          .map(
+            ([id, fields], i) =>
+              `${i + 1}) ["${id}", ${JSON.stringify(fields)}]`
+          )
+          .join("\n");
+      } catch (err) {
+        return `ERR ${err.message}`;
+      }
+    }
+
+    case "XLEN": {
+      const [key] = args;
+      if (!key) return "ERR wrong number of arguments for XLEN";
+
+      try {
+        return streams.xlen(store, key);
+      } catch (err) {
+        return `ERR ${err.message}`;
+      }
+    }
+
+    case "XREAD": {
+      const streamsIndex = args.indexOf("STREAMS");
+      if (streamsIndex === -1 || streamsIndex === args.length - 1) {
+        return "ERR syntax error";
+      }
+
+      const streamKeys = args.slice(streamsIndex + 1, streamsIndex + 2);
+      const ids = args.slice(streamsIndex + 2);
+      if (streamKeys.length !== ids.length) {
+        return "ERR wrong number of arguments for XREAD STREAMS";
+      }
+
+      try {
+        const result = streams.xread(store, null, null, {
+          streams: streamKeys.map((key, i) => [key, ids[i]]),
+        });
+
+        if (!result || result.length === 0) return "(empty array)";
+        return JSON.stringify(result);
+      } catch (err) {
+        return `ERR ${err.message}`;
+      }
+    }
+
+    case "XGROUP": {
+      const subcommand = args[0]?.toUpperCase();
+      if (subcommand === "CREATE") {
+        const [_, key, group, id] = args;
+        if (!key || !group || !id)
+          return "ERR wrong number of arguments for XGROUP CREATE";
+        try {
+          return streams.xgroupCreate(store, key, group, id);
+        } catch (err) {
+          return `ERR ${err.message}`;
+        }
+      }
+
+      return "ERR unknown subcommand for XGROUP";
+    }
+
+    case "XREADGROUP": {
+      const [_, group, consumer, , ...rest] = args;
+      const streamsIndex = rest.indexOf("STREAMS");
+      if (
+        !group ||
+        !consumer ||
+        streamsIndex === -1 ||
+        streamsIndex === rest.length - 1
+      ) {
+        return "ERR wrong number of arguments for XREADGROUP";
+      }
+
+      const streamKeys = rest.slice(streamsIndex + 1, streamsIndex + 2);
+      const ids = rest.slice(streamsIndex + 2);
+      if (streamKeys.length !== ids.length) {
+        return "ERR wrong number of streams/ids in XREADGROUP";
+      }
+
+      try {
+        const result = streams.xreadgroup(store, group, consumer, {
+          streams: streamKeys.map((key, i) => [key, ids[i]]),
+        });
+
+        if (!result || result.length === 0) return "(empty array)";
+        return JSON.stringify(result);
+      } catch (err) {
+        return `ERR ${err.message}`;
+      }
+    }
+
+    case "XACK": {
+      const [key, group, ...ids] = args;
+      if (!key || !group || ids.length === 0)
+        return "ERR wrong number of arguments for XACK";
+      try {
+        return streams.xack(store, key, group, ...ids);
       } catch (err) {
         return `ERR ${err.message}`;
       }
