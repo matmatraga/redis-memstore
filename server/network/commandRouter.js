@@ -5,6 +5,7 @@ const strings = require("../core/types/strings");
 const json = require("../core/types/json");
 const list = require("../core/types/lists");
 const sets = require("../core/types/sets");
+const hashes = require("../core/types/hashes");
 module.exports = function routeCommandRaw({ command, args }) {
   switch (command) {
     case "SET": {
@@ -346,6 +347,88 @@ module.exports = function routeCommandRaw({ command, args }) {
       if (args.length === 0) return "ERR wrong number of arguments for SDIFF";
       try {
         return sets.sdiff(store, ...args);
+      } catch (err) {
+        return `ERR ${err.message}`;
+      }
+    }
+
+    case "HSET": {
+      const [key, ...fieldValuePairs] = args;
+      if (
+        !key ||
+        fieldValuePairs.length < 2 ||
+        fieldValuePairs.length % 2 !== 0
+      )
+        return "ERR wrong number of arguments for HSET";
+
+      try {
+        return hashes.hset(store, key, ...fieldValuePairs);
+      } catch (err) {
+        return `ERR ${err.message}`;
+      }
+    }
+
+    case "HGET": {
+      const [key, field] = args;
+      if (!key || field === undefined)
+        return "ERR wrong number of arguments for HGET";
+
+      try {
+        const result = hashes.hget(store, key, field);
+        return result === null ? "(nil)" : `"${result}"`;
+      } catch (err) {
+        return `ERR ${err.message}`;
+      }
+    }
+
+    case "HMSET": {
+      const [key, ...fieldValuePairs] = args;
+      if (
+        !key ||
+        fieldValuePairs.length < 2 ||
+        fieldValuePairs.length % 2 !== 0
+      )
+        return "ERR wrong number of arguments for HMSET";
+
+      try {
+        return hashes.hmset(store, key, ...fieldValuePairs);
+      } catch (err) {
+        return `ERR ${err.message}`;
+      }
+    }
+
+    case "HGETALL": {
+      const [key] = args;
+      if (!key) return "ERR wrong number of arguments for HGETALL";
+
+      try {
+        const result = hashes.hgetall(store, key);
+        if (result.length === 0) return "(empty array)";
+        return result.map((val, i) => `${i + 1}) "${val}"`).join("\n");
+      } catch (err) {
+        return `ERR ${err.message}`;
+      }
+    }
+
+    case "HDEL": {
+      const [key, ...fields] = args;
+      if (!key || fields.length === 0)
+        return "ERR wrong number of arguments for HDEL";
+
+      try {
+        return hashes.hdel(store, key, ...fields);
+      } catch (err) {
+        return `ERR ${err.message}`;
+      }
+    }
+
+    case "HEXISTS": {
+      const [key, field] = args;
+      if (!key || field === undefined)
+        return "ERR wrong number of arguments for HEXISTS";
+
+      try {
+        return hashes.hexists(store, key, field);
       } catch (err) {
         return `ERR ${err.message}`;
       }
