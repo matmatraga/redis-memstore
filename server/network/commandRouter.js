@@ -6,6 +6,7 @@ const json = require("../core/types/json");
 const list = require("../core/types/lists");
 const sets = require("../core/types/sets");
 const hashes = require("../core/types/hashes");
+const sortedSets = require("../core/types/sortedSets");
 module.exports = function routeCommandRaw({ command, args }) {
   switch (command) {
     case "SET": {
@@ -429,6 +430,73 @@ module.exports = function routeCommandRaw({ command, args }) {
 
       try {
         return hashes.hexists(store, key, field);
+      } catch (err) {
+        return `ERR ${err.message}`;
+      }
+    }
+
+    case "ZADD": {
+      const [key, ...argsRest] = args;
+      if (!key || argsRest.length < 2)
+        return "ERR wrong number of arguments for ZADD";
+
+      try {
+        const result = sortedSets.zadd(store, key, ...argsRest);
+        if (result === null) return "(nil)";
+        return result;
+      } catch (err) {
+        return `ERR ${err.message}`;
+      }
+    }
+
+    case "ZRANGE": {
+      const [key, start, stop] = args;
+      if (!key || start === undefined || stop === undefined)
+        return "ERR wrong number of arguments for ZRANGE";
+
+      try {
+        const result = sortedSets.zrange(store, key, start, stop);
+        if (result.length === 0) return "(empty array)";
+        return result.map((val, i) => `${i + 1}) "${val}"`).join("\n");
+      } catch (err) {
+        return `ERR ${err.message}`;
+      }
+    }
+
+    case "ZRANK": {
+      const [key, member] = args;
+      if (!key || member === undefined)
+        return "ERR wrong number of arguments for ZRANK";
+
+      try {
+        const rank = sortedSets.zrank(store, key, member);
+        return rank === null ? "(nil)" : rank;
+      } catch (err) {
+        return `ERR ${err.message}`;
+      }
+    }
+
+    case "ZREM": {
+      const [key, ...members] = args;
+      if (!key || members.length === 0)
+        return "ERR wrong number of arguments for ZREM";
+
+      try {
+        return sortedSets.zrem(store, key, ...members);
+      } catch (err) {
+        return `ERR ${err.message}`;
+      }
+    }
+
+    case "ZRANGEBYSCORE": {
+      const [key, min, max] = args;
+      if (!key || min === undefined || max === undefined)
+        return "ERR wrong number of arguments for ZRANGEBYSCORE";
+
+      try {
+        const result = sortedSets.zrangebyscore(store, key, min, max);
+        if (result.length === 0) return "(empty array)";
+        return result.map((val, i) => `${i + 1}) "${val}"`).join("\n");
       } catch (err) {
         return `ERR ${err.message}`;
       }
