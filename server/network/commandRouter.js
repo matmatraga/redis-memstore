@@ -4,6 +4,7 @@ const store = require("../core/datastore");
 const strings = require("../core/types/strings");
 const json = require("../core/types/json");
 const list = require("../core/types/lists");
+const sets = require("../core/types/sets");
 module.exports = function routeCommandRaw({ command, args }) {
   switch (command) {
     case "SET": {
@@ -245,6 +246,106 @@ module.exports = function routeCommandRaw({ command, args }) {
       if (isNaN(index)) return "ERR index is not an integer";
       try {
         return list.lset(store, key, index, value);
+      } catch (err) {
+        return `ERR ${err.message}`;
+      }
+    }
+
+    case "SADD": {
+      const [key, ...members] = args;
+      if (!key || members.length === 0)
+        return "ERR wrong number of arguments for SADD";
+      try {
+        return sets.sadd(store, key, ...members);
+      } catch (err) {
+        return `ERR ${err.message}`;
+      }
+    }
+
+    case "SREM": {
+      const [key, ...members] = args;
+      if (!key || members.length === 0)
+        return "ERR wrong number of arguments for SREM";
+      try {
+        return sets.srem(store, key, ...members);
+      } catch (err) {
+        return `ERR ${err.message}`;
+      }
+    }
+
+    case "SMEMBERS": {
+      const [key] = args;
+      if (!key) return "ERR wrong number of arguments for SMEMBERS";
+      try {
+        return sets.smembers(store, key);
+      } catch (err) {
+        return `ERR ${err.message}`;
+      }
+    }
+
+    case "SISMEMBER": {
+      const [key, member] = args;
+      if (!key || member === undefined)
+        return "ERR wrong number of arguments for SISMEMBER";
+      try {
+        return sets.sismember(store, key, member);
+      } catch (err) {
+        return `ERR ${err.message}`;
+      }
+    }
+
+    case "SCARD": {
+      const [key] = args;
+      if (!key) return "ERR wrong number of arguments for SCARD";
+      try {
+        return sets.scard(store, key);
+      } catch (err) {
+        return `ERR ${err.message}`;
+      }
+    }
+
+    case "SPOP": {
+      const [key] = args;
+      if (!key) return "ERR wrong number of arguments for SPOP";
+      try {
+        return sets.spop(store, key);
+      } catch (err) {
+        return `ERR ${err.message}`;
+      }
+    }
+
+    case "SRANDMEMBER": {
+      const [key] = args;
+      if (!key) return "ERR wrong number of arguments for SRANDMEMBER";
+      try {
+        return sets.srandmember(store, key);
+      } catch (err) {
+        return `ERR ${err.message}`;
+      }
+    }
+
+    case "SUNION": {
+      if (args.length === 0) return "ERR wrong number of arguments for SUNION";
+      try {
+        return sets.sunion(store, ...args);
+      } catch (err) {
+        return `ERR ${err.message}`;
+      }
+    }
+
+    case "SINTER": {
+      if (args.length === 0) return "ERR wrong number of arguments for SINTER";
+      try {
+        return sets.sinter(store, ...args);
+      } catch (err) {
+        return `ERR ${err.message}`;
+      }
+    }
+
+    case "SDIFF": {
+      if (args.length === 0) return "ERR wrong number of arguments for SDIFF";
+      try {
+        return sets.sdiff(store, ...args);
       } catch (err) {
         return `ERR ${err.message}`;
       }
