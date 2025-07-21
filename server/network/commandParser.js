@@ -1,14 +1,10 @@
-function commandParser(input) {
-  const regex = /"([^"]*)"|'([^']*)'|[^\s]+/g;
-  const args = [];
-  let match;
+// server/network/commandParser.js
+module.exports = function parseCommand(input) {
+  const tokens = input.trim().match(/"[^"]+"|\S+/g) || [];
+  const command = tokens.shift()?.toUpperCase();
+  const args = tokens.map((token) =>
+    token.startsWith('"') && token.endsWith('"') ? token.slice(1, -1) : token
+  );
 
-  while ((match = regex.exec(input))) {
-    args.push(match[1] || match[2] || match[0]);
-  }
-
-  const command = args.shift().toUpperCase();
   return { command, args };
-}
-
-module.exports = commandParser;
+};

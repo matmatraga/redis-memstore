@@ -10,7 +10,11 @@ const sortedSets = require("../core/types/sortedSets");
 const streams = require("../core/types/streams");
 const bitmaps = require("../core/types/bitmaps");
 const geo = require("../core/types/geospatial");
-module.exports = function routeCommandRaw({ command, args }) {
+const { logAOF } = require("../services/persistenceService");
+module.exports = async function routeCommandRaw({ command, args }) {
+  // Log to AOF for persistence
+  await logAOF([command, ...args]);
+
   switch (command) {
     // Core Data Block
     case "SET": {
