@@ -12,6 +12,7 @@ const bitmaps = require("../core/types/bitmaps");
 const geo = require("../core/types/geospatial");
 module.exports = function routeCommandRaw({ command, args }) {
   switch (command) {
+    // Core Data Block
     case "SET": {
       const [key, ...valueParts] = args;
       if (!key || valueParts.length === 0)
@@ -59,6 +60,8 @@ module.exports = function routeCommandRaw({ command, args }) {
       if (!key) return "ERR wrong number of arguments for PERSIST";
       return store.persist(key);
     }
+
+    // Strings block
 
     case "APPEND": {
       const [key, value] = args;
@@ -145,6 +148,8 @@ module.exports = function routeCommandRaw({ command, args }) {
       }
     }
 
+    // JSON block
+
     case "JSON.SET": {
       const [key, path, ...valueParts] = args;
       const valueStr = valueParts.join(" ");
@@ -171,6 +176,8 @@ module.exports = function routeCommandRaw({ command, args }) {
 
       return json.arrappend(store, key, path, ...values);
     }
+
+    // Lists block
 
     case "LPUSH": {
       const [key, ...values] = args;
@@ -255,6 +262,8 @@ module.exports = function routeCommandRaw({ command, args }) {
         return `ERR ${err.message}`;
       }
     }
+
+    // Sets block
 
     case "SADD": {
       const [key, ...members] = args;
@@ -356,6 +365,8 @@ module.exports = function routeCommandRaw({ command, args }) {
       }
     }
 
+    // Hashes block
+
     case "HSET": {
       const [key, ...fieldValuePairs] = args;
       if (
@@ -438,6 +449,8 @@ module.exports = function routeCommandRaw({ command, args }) {
       }
     }
 
+    // Sorted Sets Block
+
     case "ZADD": {
       const [key, ...argsRest] = args;
       if (!key || argsRest.length < 2)
@@ -505,7 +518,7 @@ module.exports = function routeCommandRaw({ command, args }) {
       }
     }
 
-    // STREAMS
+    // Streams block
     case "XADD": {
       const [key, id, ...fieldValues] = args;
       if (!key || !id || fieldValues.length % 2 !== 0) {
@@ -629,6 +642,8 @@ module.exports = function routeCommandRaw({ command, args }) {
         return `ERR ${err.message}`;
       }
     }
+
+    // Bitmaps block
 
     case "SETBIT": {
       const [key, offsetStr, bitStr] = args;
