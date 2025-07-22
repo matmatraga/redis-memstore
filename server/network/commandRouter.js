@@ -10,19 +10,15 @@ const sortedSets = require("../core/types/sortedSets");
 const streams = require("../core/types/streams");
 const bitmaps = require("../core/types/bitmaps");
 const geo = require("../core/types/geospatial");
-const { logAOF } = require("../services/persistenceService");
+const { appendToAOF } = require("../services/persistenceService");
 module.exports = async function routeCommandRaw({ command, args }) {
-  // Log to AOF for persistence
-  await logAOF([command, ...args]);
-
   switch (command) {
     // Core Data Block
     case "SET": {
-      const [key, ...valueParts] = args;
-      if (!key || valueParts.length === 0)
-        return "ERR wrong number of arguments for SET";
-      const value = valueParts.join(" ");
-      return store.set(key, value);
+      const [key, value] = args;
+      const setResult = store.set(key, value);
+      appendToAOF(`SET ${key} ${value}`);
+      return setResult;
     }
 
     case "GET": {
@@ -39,9 +35,9 @@ module.exports = async function routeCommandRaw({ command, args }) {
     }
 
     case "DEL": {
-      const [key] = args;
-      if (!key) return "ERR wrong number of arguments for DEL";
-      return store.del(key);
+      const delResult = store.del(args);
+      appendToAOF(`DEL ${args.join(" ")}`);
+      return delResult;
     }
 
     case "EXPIRE": {
@@ -50,6 +46,7 @@ module.exports = async function routeCommandRaw({ command, args }) {
         return "ERR wrong number of arguments for EXPIRE";
       const seconds = parseInt(secondsStr, 10);
       if (isNaN(seconds) || seconds < 0) return "ERR invalid expiration time";
+      appendToAOF(`EXPIRE ${key} ${secondsStr}`);
       return store.expire(key, seconds);
     }
 
@@ -72,6 +69,7 @@ module.exports = async function routeCommandRaw({ command, args }) {
       if (!key || value === undefined)
         return "ERR wrong number of arguments for APPEND";
       try {
+        appendToAOF(`APPEND ${args[0]} ${args[1]}`);
         return strings.append(store, key, value);
       } catch (err) {
         return `ERR ${err.message}`;
@@ -146,6 +144,7 @@ module.exports = async function routeCommandRaw({ command, args }) {
       if (!key || offset === undefined || subStr === undefined)
         return "ERR wrong number of arguments for SETRANGE";
       try {
+        appendToAOF(`SETRANGE ${args[0]} ${args[1]} ${args[2]}`);
         return strings.setrange(store, key, parseInt(offset), subStr);
       } catch (err) {
         return `ERR ${err.message}`;
@@ -157,6 +156,7 @@ module.exports = async function routeCommandRaw({ command, args }) {
     case "JSON.SET": {
       const [key, path, ...valueParts] = args;
       const valueStr = valueParts.join(" ");
+      appendToAOF(`JSON.SET ${key} ${path} ${valueParts}`);
       return json.set(store, key, path, valueStr);
     }
 
@@ -169,6 +169,7 @@ module.exports = async function routeCommandRaw({ command, args }) {
     case "JSON.DEL": {
       const [key, path] = args;
       if (!key) return "ERR wrong number of arguments for JSON.DEL";
+      appendToAOF(`JSON.DEL ${key} ${path}`);
       return json.del(store, key, path);
     }
 
@@ -188,6 +189,7 @@ module.exports = async function routeCommandRaw({ command, args }) {
       if (!key || values.length === 0)
         return "ERR wrong number of arguments for LPUSH";
       try {
+        appendToAOF(`LPUSH ${key} ${values.join(" ")}`);
         return list.lpush(store, key, ...values);
       } catch (err) {
         return `ERR ${err.message}`;
@@ -199,6 +201,7 @@ module.exports = async function routeCommandRaw({ command, args }) {
       if (!key || values.length === 0)
         return "ERR wrong number of arguments for RPUSH";
       try {
+        appendToAOF(`RPUSH ${key} ${values.join(" ")}`);
         return list.rpush(store, key, ...values);
       } catch (err) {
         return `ERR ${err.message}`;
@@ -210,6 +213,7 @@ module.exports = async function routeCommandRaw({ command, args }) {
       if (!key) return "ERR wrong number of arguments for LPOP";
       try {
         const value = list.lpop(store, key);
+        appendToAOF(`LPOP ${args[0]}`);
         return value === null ? "(nil)" : `"${value}"`;
       } catch (err) {
         return `ERR ${err.message}`;
@@ -221,6 +225,7 @@ module.exports = async function routeCommandRaw({ command, args }) {
       if (!key) return "ERR wrong number of arguments for RPOP";
       try {
         const value = list.rpop(store, key);
+        appendToAOF(`RPOP ${args[0]}`);
         return value === null ? "(nil)" : `"${value}"`;
       } catch (err) {
         return `ERR ${err.message}`;
@@ -261,6 +266,7 @@ module.exports = async function routeCommandRaw({ command, args }) {
       const index = parseInt(indexStr);
       if (isNaN(index)) return "ERR index is not an integer";
       try {
+        appendToAOF(`LSET ${key} ${indexStr} ${value}`);
         return list.lset(store, key, index, value);
       } catch (err) {
         return `ERR ${err.message}`;
@@ -274,6 +280,7 @@ module.exports = async function routeCommandRaw({ command, args }) {
       if (!key || members.length === 0)
         return "ERR wrong number of arguments for SADD";
       try {
+        appendToAOF(`SADD ${key} ${members.join(" ")}`);
         return sets.sadd(store, key, ...members);
       } catch (err) {
         return `ERR ${err.message}`;
@@ -285,6 +292,7 @@ module.exports = async function routeCommandRaw({ command, args }) {
       if (!key || members.length === 0)
         return "ERR wrong number of arguments for SREM";
       try {
+        appendToAOF(`SREM ${key} ${members.join(" ")}`);
         return sets.srem(store, key, ...members);
       } catch (err) {
         return `ERR ${err.message}`;
@@ -381,6 +389,7 @@ module.exports = async function routeCommandRaw({ command, args }) {
         return "ERR wrong number of arguments for HSET";
 
       try {
+        appendToAOF(`HSET ${key} ${fieldValuePairs}`);
         return hashes.hset(store, key, ...fieldValuePairs);
       } catch (err) {
         return `ERR ${err.message}`;
@@ -435,6 +444,7 @@ module.exports = async function routeCommandRaw({ command, args }) {
         return "ERR wrong number of arguments for HDEL";
 
       try {
+        appendToAOF(`HDEL ${key} ${fields.join(" ")}`);
         return hashes.hdel(store, key, ...fields);
       } catch (err) {
         return `ERR ${err.message}`;
@@ -463,6 +473,7 @@ module.exports = async function routeCommandRaw({ command, args }) {
       try {
         const result = sortedSets.zadd(store, key, ...argsRest);
         if (result === null) return "(nil)";
+        appendToAOF(`ZADD ${key} ${argsRest.join(" ")}`);
         return result;
       } catch (err) {
         return `ERR ${err.message}`;
@@ -502,6 +513,7 @@ module.exports = async function routeCommandRaw({ command, args }) {
         return "ERR wrong number of arguments for ZREM";
 
       try {
+        appendToAOF(`ZREM ${key} ${members.join(" ")}`);
         return sortedSets.zrem(store, key, ...members);
       } catch (err) {
         return `ERR ${err.message}`;
@@ -530,6 +542,7 @@ module.exports = async function routeCommandRaw({ command, args }) {
       }
 
       try {
+        appendToAOF(`XADD ${key} ${id} ${fieldValues}`);
         return streams.xadd(store, key, id, ...fieldValues);
       } catch (err) {
         return `ERR ${err.message}`;
@@ -662,6 +675,7 @@ module.exports = async function routeCommandRaw({ command, args }) {
       if (bit !== 0 && bit !== 1) return "ERR bit is not 0 or 1";
 
       try {
+        appendToAOF(`BITSET ${key} ${offsetStr} ${bitStr}`);
         return bitmaps.setbit(store, key, offset, bit);
       } catch (err) {
         return `ERR ${err.message}`;
@@ -725,6 +739,7 @@ module.exports = async function routeCommandRaw({ command, args }) {
       if (isNaN(lon) || isNaN(lat)) return "ERR invalid longitude or latitude";
 
       try {
+        appendToAOF(`GEOADD ${key} ${lonStr} ${latStr} ${member}`);
         return geo.geoadd(store, key, lon, lat, member);
       } catch (err) {
         return `ERR ${err.message}`;
@@ -767,6 +782,6 @@ module.exports = async function routeCommandRaw({ command, args }) {
     }
 
     default:
-      return `ERR unknown command '${commandRaw}'`;
+      return `ERR unknown command '${command}'`;
   }
 };

@@ -1,0 +1,5 @@
+SET name Matt
+HSET user name,John
+LPUSH mylist one two
+SADD myset a b c
+DEL name

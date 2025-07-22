@@ -1,13 +1,24 @@
+// server/network/server.js
 const readline = require("readline");
-const store = require("../core/datastore");
+const commandParser = require("./commandParser");
 const routeCommand = require("./commandRouter");
-const { loadSnapshot, replayAOF } = require("../services/persistenceService");
+const { loadAOF } = require("../services/persistenceService");
 
-module.exports = async function startServer() {
-  await loadSnapshot(store);
+function replayAOF() {
+  const commands = loadAOF();
+  console.log(`🔁 Replaying ${commands.length} AOF commands...`);
 
-  // await replayAOF(store); // Replay AOF on startup
+  for (const line of commands) {
+    const [command, ...args] = line.trim().split(/\s+/);
+    try {
+      routeCommand(command.toUpperCase(), args);
+    } catch (err) {
+      console.error(`❌ Error replaying: ${line}`, err.message);
+    }
+  }
+}
 
+function startServer() {
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
@@ -15,33 +26,18 @@ module.exports = async function startServer() {
   });
 
   rl.prompt();
+  replayAOF();
+  rl.prompt();
 
-  rl.on("line", async (line) => {
-    const input = line.trim();
-
-    if (!input) return rl.prompt();
-
-    const parts = input
-      .match(/"[^"]*"|\S+/g)
-      ?.map((s) => (s.startsWith('"') ? s.slice(1, -1) : s));
-
-    const command = parts[0];
-    const args = parts.slice(1);
-
-    try {
-      const result = await routeCommand(store, command, args);
-      if (result !== undefined) {
-        console.log(result);
-      }
-    } catch (err) {
-      console.error("ERR", err.message);
-    }
-
-    rl.prompt(); // ✅ Use prompt instead of rl.question()
-  });
-
-  rl.on("close", () => {
+  rl.on("line", (input) => {
+    const parsed = commandParser(input);
+    const result = routeCommand(parsed);
+    console.log(result);
+    rl.prompt();
+  }).on("close", () => {
     console.log("Bye!");
     process.exit(0);
   });
-};
+}
+
+module.exports = startServer;
