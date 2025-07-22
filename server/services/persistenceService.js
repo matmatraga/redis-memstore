@@ -21,32 +21,51 @@ function loadAOF() {
 // ✅ Save in-memory store to disk
 function saveSnapshot() {
   try {
-    const snapshot = {
-      data: Object.fromEntries(store.store),
-      expirations: Object.fromEntries(store.expirations),
-    };
+    const data = {};
+    const expirations = {};
+
+    for (const [key, value] of store.store.entries()) {
+      if (store._isExpired(key)) continue; // skip expired keys
+      data[key] = value;
+
+      const ttlMs = store.expirations.get(key);
+      if (ttlMs) {
+        expirations[key] = ttlMs;
+      }
+    }
+
+    const snapshot = { data, expirations };
     fs.writeFileSync(SNAPSHOT_FILE, JSON.stringify(snapshot, null, 2));
-    console.log("📸 Snapshot saved.");
+    console.log("💾 Redis-like snapshot saved.");
   } catch (err) {
-    console.error("Failed to save snapshot:", err);
+    console.error("❌ Failed to save snapshot:", err);
   }
 }
 
 // ✅ Load snapshot from disk and hydrate datastore
 function loadSnapshot() {
   try {
-    if (fs.existsSync(SNAPSHOT_FILE)) {
-      const raw = fs.readFileSync(SNAPSHOT_FILE, "utf-8");
-      const parsed = JSON.parse(raw);
+    if (!fs.existsSync(SNAPSHOT_FILE)) return;
 
-      // Restore as Maps
-      store.data = new Map(Object.entries(parsed.store || {}));
-      store.expirations = new Map(Object.entries(parsed.expirations || {}));
+    const raw = fs.readFileSync(SNAPSHOT_FILE);
+    const snapshot = JSON.parse(raw);
 
-      console.log("🔁 Snapshot loaded into memory.");
+    const now = Date.now();
+
+    for (const [key, value] of Object.entries(snapshot.data || {})) {
+      const expireAt = snapshot.expirations?.[key];
+      if (expireAt && expireAt <= now) continue; // skip expired keys
+
+      store.store.set(key, value);
+
+      if (expireAt) {
+        store.expirations.set(key, expireAt);
+      }
     }
+
+    console.log("✅ Snapshot loaded.");
   } catch (err) {
-    console.error("Failed to load snapshot:", err);
+    console.error("❌ Failed to load snapshot:", err);
   }
 }
 
