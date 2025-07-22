@@ -29,9 +29,9 @@ function startServer() {
   replayAOF();
   rl.prompt();
 
-  rl.on("line", (input) => {
+  rl.on("line", async (input) => {
     const parsed = commandParser(input);
-    const result = routeCommand(parsed);
+    const result = await routeCommand(parsed);
     console.log(result);
     rl.prompt();
   }).on("close", () => {

@@ -1,5 +1,2 @@
-SET name Matt
-HSET user name,John
-LPUSH mylist one two
-SADD myset a b c
-DEL name
+SET name Mat
+SET name matthew
