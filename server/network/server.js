@@ -2,7 +2,11 @@
 const readline = require("readline");
 const commandParser = require("./commandParser");
 const routeCommand = require("./commandRouter");
-const { loadAOF } = require("../services/persistenceService");
+const {
+  loadAOF,
+  loadSnapshot,
+  saveSnapshot,
+} = require("../services/persistenceService");
 
 function replayAOF() {
   const commands = loadAOF();
@@ -19,6 +23,12 @@ function replayAOF() {
 }
 
 function startServer() {
+  // Load Snapshot
+  loadSnapshot();
+
+  // Replay AOF entries to recover latest changes
+  replayAOF();
+
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
@@ -26,8 +36,12 @@ function startServer() {
   });
 
   rl.prompt();
-  replayAOF();
-  rl.prompt();
+
+  // Auto-save every 30 seconds
+  setInterval(() => {
+    saveSnapshot();
+    rl.prompt();
+  }, 30000);
 
   rl.on("line", async (input) => {
     const parsed = commandParser(input);
@@ -35,6 +49,7 @@ function startServer() {
     console.log(result);
     rl.prompt();
   }).on("close", () => {
+    saveSnapshot();
     console.log("Bye!");
     process.exit(0);
   });
