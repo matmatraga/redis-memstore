@@ -10,9 +10,26 @@ const sortedSets = require("../core/types/sortedSets");
 const streams = require("../core/types/streams");
 const bitmaps = require("../core/types/bitmaps");
 const geo = require("../core/types/geospatial");
-const { appendToAOF } = require("../services/persistenceService");
+const {
+  appendToAOF,
+  saveSnapshot,
+  loadAOF,
+  bgSaveSnapshot,
+} = require("../services/persistenceService");
 module.exports = async function routeCommandRaw({ command, args }) {
   switch (command) {
+    // Persistence Command
+    case "SAVE": {
+      saveSnapshot();
+      loadAOF("SAVE"); // optional, for traceability
+      return "OK";
+    }
+
+    case "BGSAVE": {
+      bgSaveSnapshot();
+      return "Background saving started";
+    }
+
     // Core Data Block
     case "SET": {
       const [key, value] = args;

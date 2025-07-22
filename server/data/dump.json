@@ -1,7 +1,12 @@
 {
   "data": {
-    "name": "ac",
-    "number": "15"
+    "number": "15",
+    "mylist": [
+      "world"
+    ],
+    "doc": {
+      "a": 2
+    }
   },
   "expirations": {}
 }

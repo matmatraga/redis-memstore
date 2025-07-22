@@ -4,3 +4,14 @@ SET name matmat
 SET number 10
 SET name ac
 SET number 15
+LPUSH mylist world
+EXPIRE mylist 3
+SET name Mat
+EXPIRE name 30
+SET name test
+EXPIRE name 3
+LPUSH mylist world
+JSON.SET doc $ '{"a":2}'
+JSON.SET doc $ '{"a":2}'
+JSON.SET doc $ '{"a":2}'
+JSON.SET doc $ {"a":2}

@@ -69,9 +69,18 @@ function loadSnapshot() {
   }
 }
 
+function bgSaveSnapshot() {
+  console.log("[BGSAVE] Background snapshot initiated...");
+  setImmediate(() => {
+    saveSnapshot(); // reuse your existing logic
+    console.log("[BGSAVE] Background snapshot completed.");
+  });
+}
+
 module.exports = {
   appendToAOF,
   loadAOF,
   saveSnapshot,
   loadSnapshot,
+  bgSaveSnapshot,
 };
