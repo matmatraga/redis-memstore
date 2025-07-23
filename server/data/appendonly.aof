@@ -30,3 +30,29 @@ BITFIELD counter SET u8 0 10
 BITFIELD counter SET u8 0 10
 BITFIELD counter SET u8 0 10
 BITFIELD counter INCRBY u8 0 5
+PFMERGE merged
+PFADD hll a b c
+PFADD hll a b c
+PFADD hll a b c d e
+PFADD hll2 d e f
+PFADD hll1 a b c
+PFMERGE merged hll1,hll2
+PFADD hll1 a b c
+PFADD hll1 a b c
+PFADD hll1 d
+PFADD hll1 d
+PFADD hll2 x y z
+PFADD hll2 x y z
+PFMERGE hll_merged hll1 hll2
+PFMERGE hll_merged hll1,hll2
+DEL h11_merged
+DEL hll2
+DEL hll1
+DEL counter
+EXPIRE hll2 10
+EXPIRE hll1_merged 10
+EXPIRE hll1 10
+EXPIRE hll_merged 10
+EXPIRE hll_merged 10
+PFADD hll a b c
+PFADD hll d

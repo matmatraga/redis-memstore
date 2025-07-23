@@ -11,6 +11,8 @@ const streams = require("../core/types/streams");
 const bitmaps = require("../core/types/bitmaps");
 const geo = require("../core/types/geospatial");
 const bitfields = require("../core/types/bitfields");
+const hyperloglog = require("../core/types/hyperloglog");
+
 const {
   appendToAOF,
   saveSnapshot,
@@ -809,6 +811,49 @@ module.exports = async function routeCommandRaw({ command, args }) {
 
       try {
         return bitfields.handle(store, key, subcommands);
+      } catch (err) {
+        return `ERR ${err.message}`;
+      }
+    }
+
+    // 📦 HyperLogLog
+    case "PFADD": {
+      const [key, ...elements] = args;
+      if (!key || elements.length === 0)
+        return "ERR wrong number of arguments for 'PFADD' command";
+
+      try {
+        const result = hyperloglog.pfadd(store, key, elements);
+        if (result === 1) {
+          appendToAOF(`PFADD ${key} ${elements.join(" ")}`);
+        }
+        return result;
+      } catch (err) {
+        return `ERR ${err.message}`;
+      }
+    }
+
+    case "PFCOUNT": {
+      const keys = args;
+      if (keys.length === 0)
+        return "ERR wrong number of arguments for 'PFCOUNT' command";
+
+      try {
+        return hyperloglog.pfcount(store, keys);
+      } catch (err) {
+        return `ERR ${err.message}`;
+      }
+    }
+
+    case "PFMERGE": {
+      const [destKey, ...sourceKeys] = args;
+      if (!destKey || sourceKeys.length === 0)
+        return "ERR wrong number of arguments for 'PFMERGE' command";
+
+      try {
+        const result = hyperloglog.pfmerge(store, destKey, sourceKeys);
+        appendToAOF(`PFMERGE ${destKey} ${sourceKeys.join(" ")}`);
+        return result;
       } catch (err) {
         return `ERR ${err.message}`;
       }
