@@ -25,22 +25,50 @@ function benchmarkCommand(command, argsFactory) {
 
 console.log("\n🧪 Running in-memory benchmarks for Redis-like clone\n");
 
+// Strings
 benchmarkCommand("SET", (i) => ["key" + i, "value" + i]);
 benchmarkCommand("GET", (i) => ["key" + i]);
+
+// Hashes
 benchmarkCommand("HSET", (i) => ["myhash" + (i % 100), "field" + i, i]);
 benchmarkCommand("HGET", (i) => ["myhash" + (i % 100), "field" + i]);
+
+// Sets
 benchmarkCommand("SADD", (i) => ["myset", "val" + i]);
 benchmarkCommand("SMEMBERS", () => ["myset"]);
+
+// Lists
 benchmarkCommand("LPUSH", (i) => ["mylist", "val" + i]);
 benchmarkCommand("LRANGE", () => ["mylist", "0", "10"]);
+
+// Sorted Sets
 benchmarkCommand("ZADD", (i) => ["myzset", i.toString(), "val" + i]);
 benchmarkCommand("ZRANGE", () => ["myzset", "0", "10"]);
-benchmarkCommand("JSON.SET" + "JSON.GET", (i) => ["myjson", "$.key", i]);
+
+// JSON
+benchmarkCommand("JSON.SET", (i) => ["myjson", "$.key" + i, JSON.stringify(i)]);
+benchmarkCommand("JSON.GET", (i) => ["myjson", "$.key" + i]);
+
+// Streams
 benchmarkCommand("XADD", (i) => ["mystream", "*", "key", i]);
 benchmarkCommand("XRANGE", () => ["mystream", "0-0"]);
-benchmarkCommand("SETBIT", (i) => ["mybitmap", i, 1]);
-benchmarkCommand("GETBIT", (i) => ["mybitmap", i]);
-benchmarkCommand("GEOADD", (i) => ["mygeo", i.toString(), "12.34", "56.78"]);
-benchmarkCommand("GEODIST", () => ["mygeo", "0", "1", "km"]);
+
+// Bitmaps
+benchmarkCommand("SETBIT", (i) => ["mybitmap", i.toString(), "1"]);
+benchmarkCommand("GETBIT", (i) => ["mybitmap", i.toString()]);
+
+// Geospatial
+benchmarkCommand("GEOADD", (i) => ["mygeo", "12.34", "56.78", "loc" + i]);
+benchmarkCommand("GEODIST", () => ["mygeo", "loc0", "loc1", "km"]);
+
+// Bitfields (newly added)
+benchmarkCommand("BITFIELD", (i) => ["bfkey", "SET", "i8", i % 10, i]);
+benchmarkCommand("BITFIELD", (i) => ["bfkey", "GET", "i8", i % 10]);
+benchmarkCommand("BITFIELD", (i) => ["bfkey", "INCRBY", "i8", i % 10, "1"]);
+
+// HyperLogLog
+benchmarkCommand("PFADD", (i) => ["hll", `user${i}`]);
+benchmarkCommand("PFCOUNT", () => ["hll"]);
+benchmarkCommand("PFMERGE", () => ["merged", "hll", "hll"]);
 
 console.log("\n🎉 All benchmarks completed!");
