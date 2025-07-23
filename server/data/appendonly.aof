@@ -15,3 +15,18 @@ JSON.SET doc $ '{"a":2}'
 JSON.SET doc $ '{"a":2}'
 JSON.SET doc $ '{"a":2}'
 JSON.SET doc $ {"a":2}
+BITFIELD
+BITFIELD
+BITFIELD
+BITFIELD
+BITFIELD
+BITFIELD c o u n t e r   S E T   u 8   0   1 0
+BITFIELD counter SET u8 0 10
+BITFIELD counter SET u8 0 10
+BITFIELD counter SET u8 0 10
+BITFIELD counter SET u8 0 10
+BITFIELD counter SET u8 0 10
+BITFIELD counter SET u8 0 10
+BITFIELD counter SET u8 0 10
+BITFIELD counter SET u8 0 10
+BITFIELD counter INCRBY u8 0 5

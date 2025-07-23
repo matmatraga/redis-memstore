@@ -10,6 +10,7 @@ const sortedSets = require("../core/types/sortedSets");
 const streams = require("../core/types/streams");
 const bitmaps = require("../core/types/bitmaps");
 const geo = require("../core/types/geospatial");
+const bitfields = require("../core/types/bitfields");
 const {
   appendToAOF,
   saveSnapshot,
@@ -21,7 +22,7 @@ module.exports = async function routeCommandRaw({ command, args }) {
     // Persistence Command
     case "SAVE": {
       saveSnapshot();
-      loadAOF("SAVE"); // optional, for traceability
+      loadAOF("SAVE");
       return "OK";
     }
 
@@ -793,6 +794,21 @@ module.exports = async function routeCommandRaw({ command, args }) {
 
       try {
         return geo.geosearch(store, key, fromMember, radius, unit);
+      } catch (err) {
+        return `ERR ${err.message}`;
+      }
+    }
+
+    // Bitfields block
+    case "BITFIELD": {
+      const [key, ...subcommands] = args;
+
+      if (!key || subcommands.length === 0) {
+        return "ERR wrong number of arguments for 'BITFIELD' command";
+      }
+
+      try {
+        return bitfields.handle(store, key, subcommands);
       } catch (err) {
         return `ERR ${err.message}`;
       }

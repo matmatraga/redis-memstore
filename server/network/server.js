@@ -1,6 +1,6 @@
 // server/network/server.js
 const readline = require("readline");
-const commandParser = require("./commandParser");
+const { commandParser } = require("./commandParser");
 const routeCommand = require("./commandRouter");
 const {
   loadAOF,
@@ -13,9 +13,9 @@ function replayAOF() {
   console.log(`🔁 Replaying ${commands.length} AOF commands...`);
 
   for (const line of commands) {
-    const [command, ...args] = line.trim().split(/\s+/);
     try {
-      routeCommand(command.toUpperCase(), args);
+      const { command, args } = commandParser(line); // ✅ Use proper parser
+      routeCommand(command, args);
     } catch (err) {
       console.error(`❌ Error replaying: ${line}`, err.message);
     }
