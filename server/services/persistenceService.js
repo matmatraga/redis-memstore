@@ -18,6 +18,11 @@ function loadAOF() {
   return data.trim().split("\n").filter(Boolean);
 }
 
+function logAOF(command, args = []) {
+  const line = [command, ...args].join(" ");
+  appendToAOF(line);
+}
+
 // ✅ Save in-memory store to disk
 function saveSnapshot() {
   try {
@@ -79,6 +84,7 @@ function bgSaveSnapshot() {
 
 module.exports = {
   appendToAOF,
+  logAOF,
   loadAOF,
   saveSnapshot,
   loadSnapshot,

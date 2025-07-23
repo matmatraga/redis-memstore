@@ -6,6 +6,12 @@
     ],
     "doc": {
       "a": 2
+    },
+    "counter": {
+      "type": "Buffer",
+      "data": [
+        15
+      ]
     }
   },
   "expirations": {}
