@@ -71,4 +71,9 @@ benchmarkCommand("PFADD", (i) => ["hll", `user${i}`]);
 benchmarkCommand("PFCOUNT", () => ["hll"]);
 benchmarkCommand("PFMERGE", () => ["merged", "hll", "hll"]);
 
+// 🔍 Bloom Filters
+benchmarkCommand("BF.RESERVE", () => ["bf1", "0.01", "1000"]);
+benchmarkCommand("BF.ADD", (i) => ["bf1", "item" + i]);
+benchmarkCommand("BF.EXISTS", (i) => ["bf1", "item" + i]);
+
 console.log("\n🎉 All benchmarks completed!");

@@ -1,5 +1,4 @@
 // server/network/commandRouter.js
-
 const store = require("../core/datastore");
 const strings = require("../core/types/strings");
 const json = require("../core/types/json");
@@ -12,12 +11,14 @@ const bitmaps = require("../core/types/bitmaps");
 const geo = require("../core/types/geospatial");
 const bitfields = require("../core/types/bitfields");
 const hyperloglog = require("../core/types/hyperloglog");
+const bloomfilter = require("../core/types/bloomfilter");
 
 const {
   appendToAOF,
   saveSnapshot,
   loadAOF,
   bgSaveSnapshot,
+  logAOF,
 } = require("../services/persistenceService");
 module.exports = async function routeCommandRaw({ command, args }) {
   switch (command) {
@@ -857,6 +858,26 @@ module.exports = async function routeCommandRaw({ command, args }) {
       } catch (err) {
         return `ERR ${err.message}`;
       }
+    }
+
+    case "BF.RESERVE": {
+      const [key, errorRateStr, capacityStr] = args;
+      if ([key, errorRateStr, capacityStr].some((v) => v === undefined))
+        return "ERR wrong number of arguments";
+      return bloomfilter.reserve(store, key, errorRateStr, capacityStr);
+    }
+
+    case "BF.ADD": {
+      const [key, value] = args;
+      const result = bloomfilter.add(store, key, value);
+      if (typeof result === "string") return result;
+      logAOF("BF.ADD", [key, value]);
+      return result;
+    }
+
+    case "BF.EXISTS": {
+      const [key, value] = args;
+      return bloomfilter.exists(store, key, value);
     }
 
     default:

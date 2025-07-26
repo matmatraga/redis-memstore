@@ -56,3 +56,17 @@ EXPIRE hll_merged 10
 EXPIRE hll_merged 10
 PFADD hll a b c
 PFADD hll d
+BF.ADD bf1 apple
+BF.ADD bf1 banana
+BF.ADD bf1 orange
+BF.ADD bf1 apple
+BF.ADD bf1 banana
+BF.ADD bf1 orange
+DEL bf1
+BF.ADD bf1 apple
+BF.ADD bf1 banana
+BF.ADD bf1 orange
+BF.ADD bf1 apple
+BF.ADD bf1 banana
+BF.ADD bf1 apple
+BF.ADD bf1 banana
