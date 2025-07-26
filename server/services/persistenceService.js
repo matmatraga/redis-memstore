@@ -31,7 +31,20 @@ function saveSnapshot() {
 
     for (const [key, value] of store.store.entries()) {
       if (store._isExpired(key)) continue; // skip expired keys
-      data[key] = value;
+      if (
+        value?.bits instanceof Buffer &&
+        typeof value.size === "number" &&
+        typeof value.hashCount === "number"
+      ) {
+        // This is likely a bloom filter object — ensure buffer is serialized correctly
+        data[key] = {
+          bits: value.bits.toJSON(), // ensures type + data
+          size: value.size,
+          hashCount: value.hashCount,
+        };
+      } else {
+        data[key] = value;
+      }
 
       const ttlMs = store.expirations.get(key);
       if (ttlMs) {
@@ -59,7 +72,17 @@ function loadSnapshot() {
 
     for (const [key, value] of Object.entries(snapshot.data || {})) {
       const expireAt = snapshot.expirations?.[key];
-      if (expireAt && expireAt <= now) continue; // skip expired keys
+      if (expireAt && expireAt <= now) continue;
+
+      // ✅ If this is a Bloom filter, revive the Buffer
+      if (
+        typeof value === "object" &&
+        value.bits &&
+        value.bits.type === "Buffer" &&
+        Array.isArray(value.bits.data)
+      ) {
+        value.bits = Buffer.from(value.bits.data);
+      }
 
       store.store.set(key, value);
 
