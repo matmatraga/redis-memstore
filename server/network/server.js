@@ -1,4 +1,3 @@
-// server/network/server.js
 const readline = require("readline");
 const { commandParser } = require("./commandParser");
 const routeCommand = require("./commandRouter");
@@ -14,8 +13,8 @@ function replayAOF() {
 
   for (const line of commands) {
     try {
-      const { command, args } = commandParser(line); // ✅ Use proper parser
-      routeCommand(command, args);
+      const { command, args } = commandParser(line);
+      routeCommand({ command, args });
     } catch (err) {
       console.error(`❌ Error replaying: ${line}`, err.message);
     }
@@ -46,7 +45,20 @@ function startServer() {
   rl.on("line", async (input) => {
     const parsed = commandParser(input);
     const result = await routeCommand(parsed);
-    console.log(result);
+
+    // Redis-style CLI output formatting
+    if (Array.isArray(result)) {
+      result.forEach((item, i) => {
+        if (typeof item === "number") {
+          console.log(`${i + 1}) (integer) ${item}`);
+        } else {
+          console.log(`${i + 1}) ${item}`);
+        }
+      });
+    } else {
+      console.log(result);
+    }
+
     rl.prompt();
   }).on("close", () => {
     saveSnapshot();

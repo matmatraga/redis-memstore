@@ -14,6 +14,8 @@ const hyperloglog = require("../core/types/hyperloglog");
 const bloomfilter = require("../core/types/bloomfilter");
 const cuckoo = require("../core/types/cuckoofilter");
 const timeseries = require("../core/types/timeseries");
+const transactionManager = require("../services/transactionManager");
+const { commandParser } = require("./commandParser");
 
 const {
   appendToAOF,
@@ -22,8 +24,34 @@ const {
   bgSaveSnapshot,
   logAOF,
 } = require("../services/persistenceService");
-module.exports = async function routeCommandRaw({ command, args }) {
+module.exports = async function routeCommandRaw({ command, args, bypassTransaction = false }) {
+  const isTxnCmd = ["MULTI", "EXEC", "DISCARD"].includes(command);
+  if (!bypassTransaction && transactionManager.isActive() && !isTxnCmd) {
+    return transactionManager.queueCommand("default", `${command} ${args.join(" ")}`);
+  }
+
   switch (command) {
+    // Transaction Commands
+    case "MULTI": {
+      return transactionManager.begin();
+    }
+
+    case "DISCARD": {
+      return transactionManager.discard();
+    }
+
+    case "EXEC": {
+    const results = await transactionManager.exec("default", async (line) => {
+      const { command, args } = commandParser(line);
+      const result = await routeCommandRaw({ command, args, bypassTransaction: true });
+      appendToAOF(line);
+      return result;
+    });
+
+      return results;
+    }
+
+    
     // Persistence Command
     case "SAVE": {
       saveSnapshot();
