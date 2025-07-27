@@ -83,6 +83,7 @@ function loadSnapshot() {
       ) {
         value.bits = Buffer.from(value.bits.data);
       }
+
       // ✅ Hydrate Cuckoo filter
       else if (
         typeof value === "object" &&
