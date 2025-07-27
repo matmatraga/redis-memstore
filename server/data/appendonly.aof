@@ -84,3 +84,171 @@ CF.ADD mycf apple
 CF.ADD mycf banana
 CF.ADD mycf banana
 CF.DEL mycf banana
+TS.CREATE temp
+TS.ADD temp 100 25.5
+TS.ADD temp 200 26.1
+TS.ADD temp 300 26.8
+TS.ADD temp 400 27
+TS.CREATE emptySeries
+CF.RESERVE cf 100
+CF.RESERVE cf 50
+CF.RESERVE cf 50
+CF.ADD cf apple
+CF.RESERVE cf 50
+CF.DEL cf cherry
+CF.ADD cf banana
+CF.ADD cf cherry
+CF.RESERVE cf 20
+CF.RESERVE cf 100
+CF.RESERVE cf 50
+CF.RESERVE cf 50
+CF.ADD cf apple
+CF.ADD cf banana
+CF.RESERVE cf 50
+CF.DEL cf cherry
+CF.RESERVE cf 20
+CF.ADD cf cherry
+TS.CREATE temp
+TS.ADD temp 100 25.5
+TS.ADD temp 0 25
+TS.CREATE temp
+TS.ADD temp 100 26
+TS.CREATE temp
+TS.ADD temp 200 27
+TS.ADD temp 100 26.5
+TS.CREATE temp
+TS.ADD temp 200 27.5
+TS.ADD temp 0 10
+TS.ADD temp 200 30
+TS.ADD temp 100 20
+TS.CREATE temp
+TS.ADD temp 300 40
+CF.RESERVE cf 100
+CF.RESERVE cf 50
+CF.ADD cf apple
+CF.RESERVE cf 50
+CF.ADD cf banana
+CF.RESERVE cf 50
+CF.ADD cf cherry
+CF.DEL cf cherry
+CF.RESERVE cf 20
+TS.CREATE temp
+TS.CREATE temp
+TS.ADD temp 100 25.5
+TS.CREATE temp
+TS.ADD temp 0 25
+TS.ADD temp 100 26
+TS.ADD temp 200 27
+TS.CREATE temp
+TS.ADD temp 100 26.5
+TS.ADD temp 200 27.5
+TS.CREATE temp
+TS.ADD temp 100 20
+TS.ADD temp 0 10
+TS.ADD temp 200 30
+TS.ADD temp 300 40
+CF.RESERVE cf 100
+CF.RESERVE cf 50
+CF.ADD cf apple
+CF.RESERVE cf 50
+CF.ADD cf banana
+CF.RESERVE cf 50
+CF.ADD cf cherry
+CF.DEL cf cherry
+CF.RESERVE cf 20
+TS.CREATE temp
+TS.ADD temp 100 25.5
+TS.ADD temp 0 25
+TS.CREATE temp
+TS.ADD temp 100 26
+TS.ADD temp 200 27
+TS.CREATE temp
+TS.ADD temp 100 26.5
+TS.CREATE temp
+TS.ADD temp 0 10
+TS.ADD temp 200 27.5
+TS.ADD temp 200 30
+TS.ADD temp 100 20
+TS.CREATE temp
+TS.ADD temp 300 40
+CF.RESERVE cf 100
+CF.RESERVE cf 50
+CF.ADD cf apple
+CF.RESERVE cf 50
+CF.ADD cf banana
+CF.RESERVE cf 50
+CF.ADD cf cherry
+CF.DEL cf cherry
+CF.RESERVE cf 20
+TS.CREATE temp
+TS.ADD temp 100 25.5
+TS.CREATE temp
+TS.ADD temp 0 25
+TS.ADD temp 100 26
+TS.CREATE temp
+TS.ADD temp 200 27
+TS.ADD temp 100 26.5
+TS.ADD temp 200 27.5
+TS.CREATE temp
+CF.RESERVE cf 100
+CF.RESERVE cf 50
+CF.ADD cf apple
+CF.ADD cf banana
+CF.ADD cf cherry
+CF.RESERVE cf 50
+CF.DEL cf cherry
+CF.RESERVE cf 50
+CF.RESERVE cf 20
+TS.CREATE temp
+TS.CREATE temp
+TS.ADD temp 100 25.5
+TS.CREATE temp
+TS.ADD temp 0 25
+TS.ADD temp 200 27
+TS.ADD temp 100 26
+TS.CREATE temp
+TS.ADD temp 100 26.5
+TS.ADD temp 200 27.5
+CF.RESERVE cf 100
+CF.RESERVE cf 50
+CF.ADD cf apple
+CF.RESERVE cf 50
+CF.ADD cf banana
+CF.RESERVE cf 50
+CF.ADD cf cherry
+CF.DEL cf cherry
+CF.RESERVE cf 20
+TS.CREATE temp
+TS.CREATE temp
+TS.ADD temp 100 25.5
+TS.CREATE temp
+TS.ADD temp 0 25
+TS.ADD temp 100 26
+TS.CREATE temp
+TS.ADD temp 200 27
+TS.ADD temp 100 26.5
+TS.ADD temp 200 27.5
+CF.RESERVE cf 100
+CF.RESERVE cf 50
+CF.ADD cf apple
+CF.ADD cf banana
+CF.ADD cf cherry
+CF.DEL cf cherry
+CF.RESERVE cf 20
+CF.RESERVE cf 50
+CF.RESERVE cf 50
+TS.CREATE temp
+TS.ADD temp 100 25.5
+TS.ADD temp 0 25
+TS.ADD temp 100 26
+TS.ADD temp 200 27
+TS.CREATE temp
+TS.CREATE temp
+TS.ADD temp 100 26.5
+TS.ADD temp 200 27.5
+TS.ADD ts 0 10
+TS.ADD ts 100 20
+TS.ADD ts 300 40
+TS.CREATE temp
+TS.ADD ts 200 30
+TS.CREATE ts

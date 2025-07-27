@@ -1020,6 +1020,29 @@
       "bucketSize": 4,
       "maxKicks": 500,
       "capacity": 1000
+    },
+    "temp": {
+      "data": [
+        [
+          100,
+          25.5
+        ],
+        [
+          200,
+          26.1
+        ],
+        [
+          300,
+          26.8
+        ],
+        [
+          400,
+          27
+        ]
+      ]
+    },
+    "emptySeries": {
+      "data": []
     }
   },
   "expirations": {}
