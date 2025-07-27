@@ -15,6 +15,7 @@ const bloomfilter = require("../core/types/bloomfilter");
 const cuckoo = require("../core/types/cuckoofilter");
 const timeseries = require("../core/types/timeseries");
 const transactionManager = require("../services/transactionManager");
+const pubsub = require("../services/pubsubService");
 const { commandParser } = require("./commandParser");
 
 const {
@@ -31,6 +32,40 @@ module.exports = async function routeCommandRaw({ command, args, bypassTransacti
   }
 
   switch (command) {
+    // PubSub Commands
+    case "PUBLISH": {
+      const [channel, ...messageParts] = args;
+      if (!channel || messageParts.length === 0)
+        return "ERR wrong number of arguments for PUBLISH";
+      const message = messageParts.join(" ");
+      const numReceivers = pubsub.publish(channel, message);
+      return numReceivers;
+    }
+
+    case "SUBSCRIBE": {
+      const [channel] = args;
+      if (!channel) return "ERR wrong number of arguments for SUBSCRIBE";
+
+      // Subscribe with a basic callback
+      pubsub.subscribe(channel, (msg) => {
+        console.log(`🔔 Message on [${channel}]: ${msg}`);
+      });
+
+      return `Subscribed to ${channel}`;
+    }
+
+    case "UNSUBSCRIBE": {
+      const [channel] = args;
+      if (!channel) return "ERR wrong number of arguments for UNSUBSCRIBE";
+
+      // Unsubscribe using a no-op matching signature (for CLI use)
+      pubsub.unsubscribe(channel, (msg) => {
+        console.log(`🔔 Message on [${channel}]: ${msg}`);
+      });
+
+    return `Unsubscribed from ${channel}`;
+    }
+      
     // Transaction Commands
     case "MULTI": {
       return transactionManager.begin();
