@@ -82,4 +82,22 @@ benchmarkCommand("CF.ADD", (i) => ["cf1", "item" + i]);
 benchmarkCommand("CF.EXISTS", (i) => ["cf1", "item" + i]);
 benchmarkCommand("CF.DEL", (i) => ["cf1", "item" + i]);
 
+// Time Series
+benchmarkCommand("TS.CREATE", () => ["temp"]);
+benchmarkCommand("TS.ADD", (i) => [
+  "temp",
+  (i * 100).toString(),
+  (25 + (i % 5)).toString(),
+]);
+benchmarkCommand("TS.RANGE", () => ["temp", "0", (totalOps * 100).toString()]);
+benchmarkCommand("TS.RANGE", () => [
+  "temp",
+  "0",
+  (totalOps * 100).toString(),
+  "AGGREGATION",
+  "AVG",
+  "1000",
+]);
+benchmarkCommand("TS.GET", () => ["temp"]);
+
 console.log("\n🎉 All benchmarks completed!");

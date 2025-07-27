@@ -13,6 +13,7 @@ const bitfields = require("../core/types/bitfields");
 const hyperloglog = require("../core/types/hyperloglog");
 const bloomfilter = require("../core/types/bloomfilter");
 const cuckoo = require("../core/types/cuckoofilter");
+const timeseries = require("../core/types/timeseries");
 
 const {
   appendToAOF,
@@ -902,6 +903,52 @@ module.exports = async function routeCommandRaw({ command, args }) {
       const [key, item] = args;
       if (!key || !item) return "ERR wrong number of arguments";
       return cuckoo.del(store, key, item);
+    }
+
+    // Time Series
+
+    case "TS.CREATE": {
+      const [key] = args;
+      if (!key) return "ERR wrong number of arguments for 'TS.CREATE'";
+      return timeseries.create(store, key);
+    }
+
+    case "TS.ADD": {
+      const [key, timestamp, value] = args;
+      if (!key || !timestamp || !value)
+        return "ERR wrong number of arguments for 'TS.ADD'";
+      return timeseries.add(store, key, timestamp, value);
+    }
+
+    case "TS.RANGE": {
+      const [key, from, to, ...rest] = args;
+      if (!key || !from || !to) return "ERR wrong number of arguments";
+
+      // Optional aggregation parsing
+      if (rest.length === 0) {
+        return timeseries.range(store, key, from, to);
+      }
+
+      if (rest.length !== 3 || rest[0].toUpperCase() !== "AGGREGATION") {
+        return "ERR syntax error";
+      }
+
+      const [_, aggType, timeBucket] = rest;
+      return timeseries.range(
+        store,
+        key,
+        from,
+        to,
+        "AGGREGATION",
+        aggType,
+        timeBucket
+      );
+    }
+
+    case "TS.GET": {
+      const [key] = args;
+      if (!key) return "ERR wrong number of arguments for 'TS.GET'";
+      return timeseries.get(store, key);
     }
 
     default:
