@@ -76,4 +76,10 @@ benchmarkCommand("BF.RESERVE", () => ["bf1", "0.01", "1000"]);
 benchmarkCommand("BF.ADD", (i) => ["bf1", "item" + i]);
 benchmarkCommand("BF.EXISTS", (i) => ["bf1", "item" + i]);
 
+// Cuckoo Filter
+benchmarkCommand("CF.RESERVE", () => ["cf1", "1000"]);
+benchmarkCommand("CF.ADD", (i) => ["cf1", "item" + i]);
+benchmarkCommand("CF.EXISTS", (i) => ["cf1", "item" + i]);
+benchmarkCommand("CF.DEL", (i) => ["cf1", "item" + i]);
+
 console.log("\n🎉 All benchmarks completed!");

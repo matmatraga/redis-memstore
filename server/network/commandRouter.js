@@ -12,6 +12,7 @@ const geo = require("../core/types/geospatial");
 const bitfields = require("../core/types/bitfields");
 const hyperloglog = require("../core/types/hyperloglog");
 const bloomfilter = require("../core/types/bloomfilter");
+const cuckoo = require("../core/types/cuckoofilter");
 
 const {
   appendToAOF,
@@ -860,6 +861,7 @@ module.exports = async function routeCommandRaw({ command, args }) {
       }
     }
 
+    // Bloom Filters
     case "BF.RESERVE": {
       const [key, errorRateStr, capacityStr] = args;
       if ([key, errorRateStr, capacityStr].some((v) => v === undefined))
@@ -878,6 +880,28 @@ module.exports = async function routeCommandRaw({ command, args }) {
     case "BF.EXISTS": {
       const [key, value] = args;
       return bloomfilter.exists(store, key, value);
+    }
+
+    // Cuckoo Filters
+    case "CF.RESERVE": {
+      const [key, capacityStr] = args;
+      if (!key || !capacityStr) return "ERR wrong number of arguments";
+      return cuckoo.reserve(store, key, capacityStr);
+    }
+    case "CF.ADD": {
+      const [key, item] = args;
+      if (!key || !item) return "ERR wrong number of arguments";
+      return cuckoo.add(store, key, item);
+    }
+    case "CF.EXISTS": {
+      const [key, item] = args;
+      if (!key || !item) return "ERR wrong number of arguments";
+      return cuckoo.exists(store, key, item);
+    }
+    case "CF.DEL": {
+      const [key, item] = args;
+      if (!key || !item) return "ERR wrong number of arguments";
+      return cuckoo.del(store, key, item);
     }
 
     default:
