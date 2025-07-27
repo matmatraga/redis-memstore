@@ -111,3 +111,118 @@ CF.DEL cf cherry
 SET testkey 123
 INCR testkey
 SET testkey 123
+CF.ADD cf apple
+CF.ADD cf banana
+TS.ADD temp 100 25.5
+CF.DEL cf cherry
+TS.ADD temp 100 26
+CF.ADD cf cherry
+TS.ADD temp 0 25
+TS.ADD ts 200 30
+TS.ADD temp 200 27
+TS.ADD temp 200 27.5
+TS.ADD ts 300 40
+TS.ADD ts 0 10
+TS.ADD ts 100 20
+TS.ADD temp 100 26.5
+CF.ADD cf cherry
+TS.ADD temp 100 26
+CF.ADD cf banana
+TS.ADD temp 200 27
+TS.ADD temp 100 25.5
+TS.ADD temp 200 27.5
+CF.ADD cf apple
+TS.ADD temp 0 25
+TS.ADD ts 0 10
+TS.ADD temp 100 26.5
+TS.ADD ts 200 30
+TS.ADD ts 300 40
+TS.ADD ts 100 20
+SET user Alice
+SET user Alice
+APPEND user Smith
+DEL tempo
+APPEND user Smith
+CF.ADD cf apple
+DEL temp
+CF.ADD cf banana
+DEL cf
+TS.ADD temp 100 25.5
+CF.ADD cf cherry
+TS.ADD temp 200 27
+TS.ADD temp 100 26
+CF.DEL cf cherry
+TS.ADD temp 0 25
+TS.ADD temp 200 27.5
+TS.ADD ts 0 10
+TS.ADD temp 100 26.5
+TS.ADD ts 200 30
+CF.ADD cf cherry
+TS.ADD ts 300 40
+TS.ADD temp 100 26
+TS.ADD temp 100 25.5
+TS.ADD ts 100 20
+TS.ADD temp 200 27
+TS.ADD temp 200 27.5
+TS.ADD temp 0 25
+TS.ADD ts 200 30
+TS.ADD ts 0 10
+CF.ADD cf apple
+TS.ADD ts 300 40
+TS.ADD temp 100 26.5
+SET user Alice
+TS.ADD ts 100 20
+SET user Alice
+APPEND user Smith
+DEL tempo
+DEL cf
+APPEND user Smith
+SET foo bar
+SET foo bar
+SET foo bar
+DEL temp
+TS.ADD temp 100 25.5
+SET foo bar
+TS.ADD temp 200 27
+SET foo bar
+TS.ADD temp 200 27.5
+TS.ADD ts 300 40
+TS.ADD temp 100 26
+TS.ADD temp 0 25
+TS.ADD temp 100 26.5
+TS.ADD ts 0 10
+TS.ADD ts 100 20
+CF.ADD cf apple
+CF.ADD cf cherry
+TS.ADD ts 200 30
+CF.DEL cf cherry
+SET testkey 123
+CF.ADD cf banana
+SET testkey 123
+TS.CREATE temp
+TS.ADD temp 100 25.5
+TS.CREATE temp
+TS.ADD temp 100 26
+TS.ADD temp 200 27
+TS.CREATE temp
+TS.ADD temp 200 27.5
+TS.ADD temp 100 26.5
+TS.ADD ts 0 10
+TS.CREATE ts
+TS.ADD ts 100 20
+TS.ADD ts 300 40
+TS.ADD ts 200 30
+TS.CREATE temp
+TS.ADD temp 0 25
+CF.RESERVE cf 100
+CF.RESERVE cf 50
+CF.ADD cf banana
+CF.RESERVE cf 50
+CF.ADD cf apple
+CF.RESERVE cf 50
+CF.DEL cf cherry
+CF.ADD cf cherry
+CF.RESERVE cf 20
+SET testkey 123
+SET testkey 123
+INCR testkey

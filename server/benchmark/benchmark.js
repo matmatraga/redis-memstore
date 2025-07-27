@@ -1,3 +1,4 @@
+
 const { performance } = require("perf_hooks");
 const handleCommand = require("../network/commandRouter");
 
@@ -118,6 +119,36 @@ async function benchmarkCommand(command, argsFactory) {
       2
     )}ms => ${txOpsPerSec.toFixed(2)} tx/sec`
   );
+
+  
+  // Pub/Sub
+  console.log("\n⏱️ Benchmarking Pub/Sub messaging");
+
+  let received = 0;
+  const subscriber = () => received++;
+
+  // Subscribe once to test channel
+  await handleCommand("SUBSCRIBE", ["bench-channel"]);
+  const pubsub = require("../services/pubsubService");
+  pubsub.subscribe("bench-channel", subscriber);
+
+  const pubStart = performance.now();
+  for (let i = 0; i < totalOps; i++) {
+    await handleCommand("PUBLISH", ["bench-channel", "message" + i]);
+  }
+  const pubEnd = performance.now();
+
+  pubsub.unsubscribe("bench-channel", subscriber);
+
+  const pubDuration = pubEnd - pubStart;
+  const pubOpsPerSec = (totalOps / pubDuration) * 1000;
+
+  console.log(
+    `PUBLISH - Executed ${totalOps} messages in ${pubDuration.toFixed(
+      2
+    )}ms => ${pubOpsPerSec.toFixed(2)} msg/sec`
+  );
+  console.log(`Received: ${received}/${totalOps} messages`);
 
   console.log("\n🎉 All benchmarks completed!");
 })();
