@@ -83,6 +83,17 @@ function loadSnapshot() {
       ) {
         value.bits = Buffer.from(value.bits.data);
       }
+      // ✅ Hydrate Cuckoo filter
+      else if (
+        typeof value === "object" &&
+        Array.isArray(value.buckets) &&
+        typeof value.capacity === "number" &&
+        typeof value.bucketSize === "number"
+      ) {
+        value.buckets = value.buckets.map((bucket) =>
+          bucket.map((fp) => Buffer.from(fp.data ?? fp))
+        );
+      }
 
       store.store.set(key, value);
 

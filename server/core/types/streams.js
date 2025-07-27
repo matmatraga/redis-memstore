@@ -117,7 +117,6 @@ const xack = (store, key, group, ...ids) => {
 };
 
 // --- Helpers ---
-
 const chunkPairs = (arr) => {
   const res = [];
   for (let i = 0; i < arr.length; i += 2) {

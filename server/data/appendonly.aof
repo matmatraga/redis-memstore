@@ -70,3 +70,17 @@ BF.ADD bf1 apple
 BF.ADD bf1 banana
 BF.ADD bf1 apple
 BF.ADD bf1 banana
+CF.RESERVE cf 100
+CF.RESERVE cf 50
+CF.ADD cf apple
+CF.ADD cf banana
+CF.RESERVE cf 50
+CF.DEL cf cherry
+CF.ADD cf cherry
+CF.RESERVE cf 20
+CF.RESERVE cf 50
+CF.RESERVE mycf 1000
+CF.ADD mycf apple
+CF.ADD mycf banana
+CF.ADD mycf banana
+CF.DEL mycf banana
