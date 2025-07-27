@@ -76,14 +76,20 @@ function add(store, key, item) {
   return "ERR insert failed";
 }
 
-function tryInsert(data, i, fp) {
-  const bucket = data.buckets[i];
+function tryInsert(data, index, fingerprint) {
+  if (!data.buckets[index]) {
+    data.buckets[index] = [];
+  }
+
+  const bucket = data.buckets[index];
+
   if (bucket.length < data.bucketSize) {
-    bucket.push(fp);
+    bucket.push(fingerprint);
     return true;
   }
   return false;
 }
+
 
 function exists(store, key, item) {
   const data = store.get(key);

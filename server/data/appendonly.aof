@@ -1,254 +1,113 @@
-SET name Mat
-SET name matthew
-SET name matmat
-SET number 10
-SET name ac
-SET number 15
-LPUSH mylist world
-EXPIRE mylist 3
-SET name Mat
-EXPIRE name 30
-SET name test
-EXPIRE name 3
-LPUSH mylist world
-JSON.SET doc $ '{"a":2}'
-JSON.SET doc $ '{"a":2}'
-JSON.SET doc $ '{"a":2}'
-JSON.SET doc $ {"a":2}
-BITFIELD
-BITFIELD
-BITFIELD
-BITFIELD
-BITFIELD
-BITFIELD c o u n t e r   S E T   u 8   0   1 0
-BITFIELD counter SET u8 0 10
-BITFIELD counter SET u8 0 10
-BITFIELD counter SET u8 0 10
-BITFIELD counter SET u8 0 10
-BITFIELD counter SET u8 0 10
-BITFIELD counter SET u8 0 10
-BITFIELD counter SET u8 0 10
-BITFIELD counter SET u8 0 10
-BITFIELD counter INCRBY u8 0 5
-PFMERGE merged
-PFADD hll a b c
-PFADD hll a b c
-PFADD hll a b c d e
-PFADD hll2 d e f
-PFADD hll1 a b c
-PFMERGE merged hll1,hll2
-PFADD hll1 a b c
-PFADD hll1 a b c
-PFADD hll1 d
-PFADD hll1 d
-PFADD hll2 x y z
-PFADD hll2 x y z
-PFMERGE hll_merged hll1 hll2
-PFMERGE hll_merged hll1,hll2
-DEL h11_merged
-DEL hll2
-DEL hll1
-DEL counter
-EXPIRE hll2 10
-EXPIRE hll1_merged 10
-EXPIRE hll1 10
-EXPIRE hll_merged 10
-EXPIRE hll_merged 10
-PFADD hll a b c
-PFADD hll d
-BF.ADD bf1 apple
-BF.ADD bf1 banana
-BF.ADD bf1 orange
-BF.ADD bf1 apple
-BF.ADD bf1 banana
-BF.ADD bf1 orange
-DEL bf1
-BF.ADD bf1 apple
-BF.ADD bf1 banana
-BF.ADD bf1 orange
-BF.ADD bf1 apple
-BF.ADD bf1 banana
-BF.ADD bf1 apple
-BF.ADD bf1 banana
 CF.RESERVE cf 100
 CF.RESERVE cf 50
 CF.ADD cf apple
+CF.RESERVE cf 50
 CF.ADD cf banana
 CF.RESERVE cf 50
 CF.DEL cf cherry
 CF.ADD cf cherry
 CF.RESERVE cf 20
-CF.RESERVE cf 50
-CF.RESERVE mycf 1000
-CF.ADD mycf apple
-CF.ADD mycf banana
-CF.ADD mycf banana
-CF.DEL mycf banana
+TS.CREATE temp
 TS.CREATE temp
 TS.ADD temp 100 25.5
-TS.ADD temp 200 26.1
-TS.ADD temp 300 26.8
-TS.ADD temp 400 27
-TS.CREATE emptySeries
-CF.RESERVE cf 100
-CF.RESERVE cf 50
-CF.RESERVE cf 50
-CF.ADD cf apple
-CF.RESERVE cf 50
-CF.DEL cf cherry
-CF.ADD cf banana
-CF.ADD cf cherry
-CF.RESERVE cf 20
-CF.RESERVE cf 100
-CF.RESERVE cf 50
-CF.RESERVE cf 50
-CF.ADD cf apple
-CF.ADD cf banana
-CF.RESERVE cf 50
-CF.DEL cf cherry
-CF.RESERVE cf 20
-CF.ADD cf cherry
-TS.CREATE temp
-TS.ADD temp 100 25.5
+TS.ADD temp 100 26
+TS.ADD temp 200 27
 TS.ADD temp 0 25
 TS.CREATE temp
-TS.ADD temp 100 26
 TS.CREATE temp
-TS.ADD temp 200 27
-TS.ADD temp 100 26.5
-TS.CREATE temp
+TS.CREATE ts
 TS.ADD temp 200 27.5
-TS.ADD temp 0 10
-TS.ADD temp 200 30
-TS.ADD temp 100 20
-TS.CREATE temp
-TS.ADD temp 300 40
-CF.RESERVE cf 100
-CF.RESERVE cf 50
-CF.ADD cf apple
-CF.RESERVE cf 50
-CF.ADD cf banana
-CF.RESERVE cf 50
-CF.ADD cf cherry
-CF.DEL cf cherry
-CF.RESERVE cf 20
-TS.CREATE temp
-TS.CREATE temp
-TS.ADD temp 100 25.5
-TS.CREATE temp
-TS.ADD temp 0 25
-TS.ADD temp 100 26
-TS.ADD temp 200 27
-TS.CREATE temp
+TS.ADD ts 200 30
+TS.ADD ts 0 10
+TS.ADD ts 300 40
 TS.ADD temp 100 26.5
+TS.ADD ts 100 20
+CF.RESERVE cf 100
+CF.ADD cf cherry
+TS.ADD temp 100 26
+CF.ADD cf banana
+TS.ADD temp 100 25.5
+TS.ADD temp 200 27
+TS.ADD temp 0 25
 TS.ADD temp 200 27.5
-TS.CREATE temp
-TS.ADD temp 100 20
-TS.ADD temp 0 10
-TS.ADD temp 200 30
-TS.ADD temp 300 40
-CF.RESERVE cf 100
-CF.RESERVE cf 50
 CF.ADD cf apple
-CF.RESERVE cf 50
-CF.ADD cf banana
-CF.RESERVE cf 50
-CF.ADD cf cherry
-CF.DEL cf cherry
-CF.RESERVE cf 20
-TS.CREATE temp
-TS.ADD temp 100 25.5
-TS.ADD temp 0 25
-TS.CREATE temp
-TS.ADD temp 100 26
-TS.ADD temp 200 27
-TS.CREATE temp
+TS.ADD ts 200 30
+TS.ADD ts 0 10
+TS.ADD ts 300 40
+TS.ADD ts 100 20
+TS.CREATE ts
 TS.ADD temp 100 26.5
-TS.CREATE temp
-TS.ADD temp 0 10
-TS.ADD temp 200 27.5
-TS.ADD temp 200 30
-TS.ADD temp 100 20
-TS.CREATE temp
-TS.ADD temp 300 40
-CF.RESERVE cf 100
-CF.RESERVE cf 50
-CF.ADD cf apple
-CF.RESERVE cf 50
-CF.ADD cf banana
-CF.RESERVE cf 50
-CF.ADD cf cherry
-CF.DEL cf cherry
-CF.RESERVE cf 20
-TS.CREATE temp
-TS.ADD temp 100 25.5
-TS.CREATE temp
-TS.ADD temp 0 25
-TS.ADD temp 100 26
-TS.CREATE temp
-TS.ADD temp 200 27
-TS.ADD temp 100 26.5
-TS.ADD temp 200 27.5
-TS.CREATE temp
-CF.RESERVE cf 100
-CF.RESERVE cf 50
+SET user Alice
+APPEND user Smith
+SET user Alice
+APPEND user  Smith
+GET user
+DEL tempo
+DEL temp
+DEL cf
 CF.ADD cf apple
 CF.ADD cf banana
-CF.ADD cf cherry
-CF.RESERVE cf 50
-CF.DEL cf cherry
-CF.RESERVE cf 50
-CF.RESERVE cf 20
-TS.CREATE temp
-TS.CREATE temp
 TS.ADD temp 100 25.5
-TS.CREATE temp
-TS.ADD temp 0 25
+CF.DEL cf cherry
 TS.ADD temp 200 27
-TS.ADD temp 100 26
-TS.CREATE temp
-TS.ADD temp 100 26.5
-TS.ADD temp 200 27.5
-CF.RESERVE cf 100
-CF.RESERVE cf 50
-CF.ADD cf apple
-CF.RESERVE cf 50
-CF.ADD cf banana
-CF.RESERVE cf 50
 CF.ADD cf cherry
-CF.DEL cf cherry
-CF.RESERVE cf 20
-TS.CREATE temp
-TS.CREATE temp
-TS.ADD temp 100 25.5
-TS.CREATE temp
 TS.ADD temp 0 25
 TS.ADD temp 100 26
-TS.CREATE temp
-TS.ADD temp 200 27
-TS.ADD temp 100 26.5
-TS.ADD temp 200 27.5
-CF.RESERVE cf 100
-CF.RESERVE cf 50
-CF.ADD cf apple
-CF.ADD cf banana
-CF.ADD cf cherry
-CF.DEL cf cherry
-CF.RESERVE cf 20
-CF.RESERVE cf 50
-CF.RESERVE cf 50
-TS.CREATE temp
-TS.ADD temp 100 25.5
-TS.ADD temp 0 25
-TS.ADD temp 100 26
-TS.ADD temp 200 27
-TS.CREATE temp
-TS.CREATE temp
-TS.ADD temp 100 26.5
 TS.ADD temp 200 27.5
 TS.ADD ts 0 10
+TS.ADD ts 200 30
+TS.ADD temp 100 26.5
+CF.ADD cf cherry
 TS.ADD ts 100 20
 TS.ADD ts 300 40
-TS.CREATE temp
+TS.ADD temp 100 26
+TS.ADD temp 100 25.5
+TS.ADD temp 200 27
+CF.ADD cf banana
+TS.ADD temp 0 25
+TS.ADD temp 200 27.5
+CF.ADD cf apple
 TS.ADD ts 200 30
+TS.ADD ts 0 10
+TS.ADD ts 300 40
+TS.ADD ts 100 20
+TS.ADD temp 100 26.5
+SET user Alice
+SET user Alice
+APPEND user Smith
+APPEND user Smith
+DEL cf
+DEL tempo
+DEL temp
+SET foo bar
+SET foo bar
+SET foo bar
+SET foo bar
+SET foo bar
+TS.CREATE temp
+TS.CREATE temp
+TS.ADD temp 100 25.5
+TS.ADD temp 200 27
+TS.CREATE temp
+TS.CREATE temp
+TS.ADD temp 100 26
+TS.ADD temp 100 26.5
+TS.ADD temp 200 27.5
 TS.CREATE ts
+TS.ADD ts 300 40
+TS.ADD ts 100 20
+TS.ADD ts 0 10
+TS.ADD ts 200 30
+TS.ADD temp 0 25
+CF.RESERVE cf 100
+CF.RESERVE cf 50
+CF.RESERVE cf 50
+CF.ADD cf apple
+CF.ADD cf banana
+CF.RESERVE cf 50
+CF.RESERVE cf 20
+CF.ADD cf cherry
+CF.DEL cf cherry
+SET testkey 123
+INCR testkey
+SET testkey 123

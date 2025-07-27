@@ -1,15 +1,14 @@
-// benchmark/benchmark.js
 const { performance } = require("perf_hooks");
 const handleCommand = require("../network/commandRouter");
 
 const totalOps = 100000;
 
-function benchmarkCommand(command, argsFactory) {
+async function benchmarkCommand(command, argsFactory) {
   const start = performance.now();
 
   for (let i = 0; i < totalOps; i++) {
     const args = argsFactory(i);
-    handleCommand(command, args);
+    await handleCommand(command, args);
   }
 
   const end = performance.now();
@@ -23,81 +22,102 @@ function benchmarkCommand(command, argsFactory) {
   );
 }
 
-console.log("\n🧪 Running in-memory benchmarks for Redis-like clone\n");
+(async () => {
+  console.log("\n🧪 Running in-memory benchmarks for Redis-like clone\n");
 
-// Strings
-benchmarkCommand("SET", (i) => ["key" + i, "value" + i]);
-benchmarkCommand("GET", (i) => ["key" + i]);
+  // Strings
+  await benchmarkCommand("SET", (i) => ["key" + i, "value" + i]);
+  await benchmarkCommand("GET", (i) => ["key" + i]);
 
-// Hashes
-benchmarkCommand("HSET", (i) => ["myhash" + (i % 100), "field" + i, i]);
-benchmarkCommand("HGET", (i) => ["myhash" + (i % 100), "field" + i]);
+  // Hashes
+  await benchmarkCommand("HSET", (i) => ["myhash" + (i % 100), "field" + i, i]);
+  await benchmarkCommand("HGET", (i) => ["myhash" + (i % 100), "field" + i]);
 
-// Sets
-benchmarkCommand("SADD", (i) => ["myset", "val" + i]);
-benchmarkCommand("SMEMBERS", () => ["myset"]);
+  // Sets
+  await benchmarkCommand("SADD", (i) => ["myset", "val" + i]);
+  await benchmarkCommand("SMEMBERS", () => ["myset"]);
 
-// Lists
-benchmarkCommand("LPUSH", (i) => ["mylist", "val" + i]);
-benchmarkCommand("LRANGE", () => ["mylist", "0", "10"]);
+  // Lists
+  await benchmarkCommand("LPUSH", (i) => ["mylist", "val" + i]);
+  await benchmarkCommand("LRANGE", () => ["mylist", "0", "10"]);
 
-// Sorted Sets
-benchmarkCommand("ZADD", (i) => ["myzset", i.toString(), "val" + i]);
-benchmarkCommand("ZRANGE", () => ["myzset", "0", "10"]);
+  // Sorted Sets
+  await benchmarkCommand("ZADD", (i) => ["myzset", i.toString(), "val" + i]);
+  await benchmarkCommand("ZRANGE", () => ["myzset", "0", "10"]);
 
-// JSON
-benchmarkCommand("JSON.SET", (i) => ["myjson", "$.key" + i, JSON.stringify(i)]);
-benchmarkCommand("JSON.GET", (i) => ["myjson", "$.key" + i]);
+  // JSON
+  await benchmarkCommand("JSON.SET", (i) => ["myjson", "$.key" + i, JSON.stringify(i)]);
+  await benchmarkCommand("JSON.GET", (i) => ["myjson", "$.key" + i]);
 
-// Streams
-benchmarkCommand("XADD", (i) => ["mystream", "*", "key", i]);
-benchmarkCommand("XRANGE", () => ["mystream", "0-0"]);
+  // Streams
+  await benchmarkCommand("XADD", (i) => ["mystream", "*", "key", i]);
+  await benchmarkCommand("XRANGE", () => ["mystream", "0-0"]);
 
-// Bitmaps
-benchmarkCommand("SETBIT", (i) => ["mybitmap", i.toString(), "1"]);
-benchmarkCommand("GETBIT", (i) => ["mybitmap", i.toString()]);
+  // Bitmaps
+  await benchmarkCommand("SETBIT", (i) => ["mybitmap", i.toString(), "1"]);
+  await benchmarkCommand("GETBIT", (i) => ["mybitmap", i.toString()]);
 
-// Geospatial
-benchmarkCommand("GEOADD", (i) => ["mygeo", "12.34", "56.78", "loc" + i]);
-benchmarkCommand("GEODIST", () => ["mygeo", "loc0", "loc1", "km"]);
+  // Geospatial
+  await benchmarkCommand("GEOADD", (i) => ["mygeo", "12.34", "56.78", "loc" + i]);
+  await benchmarkCommand("GEODIST", () => ["mygeo", "loc0", "loc1", "km"]);
 
-// Bitfields (newly added)
-benchmarkCommand("BITFIELD", (i) => ["bfkey", "SET", "i8", i % 10, i]);
-benchmarkCommand("BITFIELD", (i) => ["bfkey", "GET", "i8", i % 10]);
-benchmarkCommand("BITFIELD", (i) => ["bfkey", "INCRBY", "i8", i % 10, "1"]);
+  // Bitfields
+  await benchmarkCommand("BITFIELD", (i) => ["bfkey", "SET", "i8", i % 10, i]);
+  await benchmarkCommand("BITFIELD", (i) => ["bfkey", "GET", "i8", i % 10]);
+  await benchmarkCommand("BITFIELD", (i) => ["bfkey", "INCRBY", "i8", i % 10, "1"]);
 
-// HyperLogLog
-benchmarkCommand("PFADD", (i) => ["hll", `user${i}`]);
-benchmarkCommand("PFCOUNT", () => ["hll"]);
-benchmarkCommand("PFMERGE", () => ["merged", "hll", "hll"]);
+  // HyperLogLog
+  await benchmarkCommand("PFADD", (i) => ["hll", `user${i}`]);
+  await benchmarkCommand("PFCOUNT", () => ["hll"]);
+  await benchmarkCommand("PFMERGE", () => ["merged", "hll", "hll"]);
 
-// 🔍 Bloom Filters
-benchmarkCommand("BF.RESERVE", () => ["bf1", "0.01", "1000"]);
-benchmarkCommand("BF.ADD", (i) => ["bf1", "item" + i]);
-benchmarkCommand("BF.EXISTS", (i) => ["bf1", "item" + i]);
+  // Bloom Filters
+  await benchmarkCommand("BF.RESERVE", () => ["bf1", "0.01", "1000"]);
+  await benchmarkCommand("BF.ADD", (i) => ["bf1", "item" + i]);
+  await benchmarkCommand("BF.EXISTS", (i) => ["bf1", "item" + i]);
 
-// Cuckoo Filter
-benchmarkCommand("CF.RESERVE", () => ["cf1", "1000"]);
-benchmarkCommand("CF.ADD", (i) => ["cf1", "item" + i]);
-benchmarkCommand("CF.EXISTS", (i) => ["cf1", "item" + i]);
-benchmarkCommand("CF.DEL", (i) => ["cf1", "item" + i]);
+  // Cuckoo Filter
+  await benchmarkCommand("CF.RESERVE", () => ["cf1", "1000"]);
+  await benchmarkCommand("CF.ADD", (i) => ["cf1", "item" + i]);
+  await benchmarkCommand("CF.EXISTS", (i) => ["cf1", "item" + i]);
+  await benchmarkCommand("CF.DEL", (i) => ["cf1", "item" + i]);
 
-// Time Series
-benchmarkCommand("TS.CREATE", () => ["temp"]);
-benchmarkCommand("TS.ADD", (i) => [
-  "temp",
-  (i * 100).toString(),
-  (25 + (i % 5)).toString(),
-]);
-benchmarkCommand("TS.RANGE", () => ["temp", "0", (totalOps * 100).toString()]);
-benchmarkCommand("TS.RANGE", () => [
-  "temp",
-  "0",
-  (totalOps * 100).toString(),
-  "AGGREGATION",
-  "AVG",
-  "1000",
-]);
-benchmarkCommand("TS.GET", () => ["temp"]);
+  // Time Series
+  await benchmarkCommand("TS.CREATE", () => ["temp"]);
+  await benchmarkCommand("TS.ADD", (i) => [
+    "temp",
+    (i * 100).toString(),
+    (25 + (i % 5)).toString(),
+  ]);
+  await benchmarkCommand("TS.RANGE", () => ["temp", "0", (totalOps * 100).toString()]);
+  await benchmarkCommand("TS.RANGE", () => [
+    "temp",
+    "0",
+    (totalOps * 100).toString(),
+    "AGGREGATION",
+    "AVG",
+    "1000",
+  ]);
+  await benchmarkCommand("TS.GET", () => ["temp"]);
 
-console.log("\n🎉 All benchmarks completed!");
+  // Transactions
+  console.log("\n⏱️ Benchmarking MULTI → EXEC Transactions");
+  const iterations = 1000;
+  const txStart = performance.now();
+  for (let i = 0; i < iterations; i++) {
+    await handleCommand("MULTI", []);
+    await handleCommand("SET", [`txkey${i}`, `${i}`]);
+    await handleCommand("INCR", [`txkey${i}`]);
+    await handleCommand("EXEC", []);
+  }
+  const txEnd = performance.now();
+  const txDuration = txEnd - txStart;
+  const txOpsPerSec = (iterations / txDuration) * 1000;
+  console.log(
+    `MULTI/EXEC - Executed ${iterations} transactions in ${txDuration.toFixed(
+      2
+    )}ms => ${txOpsPerSec.toFixed(2)} tx/sec`
+  );
+
+  console.log("\n🎉 All benchmarks completed!");
+})();
