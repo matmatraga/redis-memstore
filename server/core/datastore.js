@@ -83,6 +83,27 @@ class DataStore {
     this.store.clear();
     this.expirations.clear();
   }
+
+  exportSnapshot() {
+    const snapshot = {
+      store: Object.fromEntries(this.store),
+      expirations: Object.fromEntries(this.expirations),
+    };
+    return snapshot;
+  }
+
+  importSnapshot(snapshot) {
+    this.store.clear();
+    this.expirations.clear();
+
+    for (const [key, value] of Object.entries(snapshot.store || {})) {
+      this.store.set(key, value);
+    }
+
+    for (const [key, expireAt] of Object.entries(snapshot.expirations || {})) {
+      this.expirations.set(key, expireAt);
+    }
+  }
 }
 
 module.exports = new DataStore();
