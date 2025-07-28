@@ -16,8 +16,8 @@ const cuckoo = require("../core/types/cuckoofilter");
 const timeseries = require("../core/types/timeseries");
 const transactionManager = require("../services/transactionManager");
 const pubsub = require("../services/pubsubService");
+const { getRole, forwardToSlaves } = require("../services/replicationService");
 const { commandParser } = require("./commandParser");
-
 const {
   appendToAOF,
   saveSnapshot,
@@ -25,11 +25,24 @@ const {
   bgSaveSnapshot,
   logAOF,
 } = require("../services/persistenceService");
-module.exports = async function routeCommandRaw({ command, args, bypassTransaction = false }) {
+
+module.exports = async function routeCommandRaw({
+  command,
+  args,
+  bypassTransaction = false,
+}) {
   const isTxnCmd = ["MULTI", "EXEC", "DISCARD"].includes(command);
   if (!bypassTransaction && transactionManager.isActive() && !isTxnCmd) {
-    return transactionManager.queueCommand("default", `${command} ${args.join(" ")}`);
+    return transactionManager.queueCommand(
+      "default",
+      `${command} ${args.join(" ")}`
+    );
   }
+
+  const isMaster = getRole() === "master";
+  const replicate = (cmd, argumentsArray) => {
+    forwardToSlaves(cmd, argumentsArray);
+  };
 
   switch (command) {
     // PubSub Commands
@@ -63,9 +76,9 @@ module.exports = async function routeCommandRaw({ command, args, bypassTransacti
         console.log(`🔔 Message on [${channel}]: ${msg}`);
       });
 
-    return `Unsubscribed from ${channel}`;
+      return `Unsubscribed from ${channel}`;
     }
-      
+
     // Transaction Commands
     case "MULTI": {
       return transactionManager.begin();
@@ -76,17 +89,20 @@ module.exports = async function routeCommandRaw({ command, args, bypassTransacti
     }
 
     case "EXEC": {
-    const results = await transactionManager.exec("default", async (line) => {
-      const { command, args } = commandParser(line);
-      const result = await routeCommandRaw({ command, args, bypassTransaction: true });
-      appendToAOF(line);
-      return result;
-    });
+      const results = await transactionManager.exec("default", async (line) => {
+        const { command, args } = commandParser(line);
+        const result = await routeCommandRaw({
+          command,
+          args,
+          bypassTransaction: true,
+        });
+        appendToAOF(line);
+        return result;
+      });
 
       return results;
     }
 
-    
     // Persistence Command
     case "SAVE": {
       saveSnapshot();
@@ -102,9 +118,12 @@ module.exports = async function routeCommandRaw({ command, args, bypassTransacti
     // Core Data Block
     case "SET": {
       const [key, value] = args;
-      const setResult = store.set(key, value);
-      appendToAOF(`SET ${key} ${value}`);
-      return setResult;
+      const result = store.set(key, value);
+      if (isMaster) {
+        appendToAOF(`SET ${key} ${value}`);
+        replicate("SET", [key, value]);
+      }
+      return result;
     }
 
     case "GET": {
@@ -121,8 +140,11 @@ module.exports = async function routeCommandRaw({ command, args, bypassTransacti
     }
 
     case "DEL": {
-      const delResult = store.del(args);
-      appendToAOF(`DEL ${args.join(" ")}`);
+      const delResult = store.del(...args);
+      if (isMaster) {
+        appendToAOF(`DEL ${args.join(" ")}`);
+        replicate("DEL", args);
+      }
       return delResult;
     }
 
@@ -132,7 +154,10 @@ module.exports = async function routeCommandRaw({ command, args, bypassTransacti
         return "ERR wrong number of arguments for EXPIRE";
       const seconds = parseInt(secondsStr, 10);
       if (isNaN(seconds) || seconds < 0) return "ERR invalid expiration time";
-      appendToAOF(`EXPIRE ${key} ${secondsStr}`);
+      if (isMaster) {
+        appendToAOF(`EXPIRE ${key} ${secondsStr}`);
+        replicate("EXPIRE", [key, secondsStr]);
+      }
       return store.expire(key, seconds);
     }
 
@@ -155,7 +180,10 @@ module.exports = async function routeCommandRaw({ command, args, bypassTransacti
       if (!key || value === undefined)
         return "ERR wrong number of arguments for APPEND";
       try {
-        appendToAOF(`APPEND ${args[0]} ${args[1]}`);
+        if (isMaster) {
+          appendToAOF(`APPEND ${key} ${value}`);
+          replicate("APPEND", [key, value]);
+        }
         return strings.append(store, key, value);
       } catch (err) {
         return `ERR ${err.message}`;
@@ -176,6 +204,10 @@ module.exports = async function routeCommandRaw({ command, args, bypassTransacti
       const [key] = args;
       if (!key) return "ERR wrong number of arguments for INCR";
       try {
+        if (isMaster) {
+          appendToAOF(`${command} ${args.join(" ")}`);
+          replicate(command, args);
+        }
         return strings.incr(store, key);
       } catch (err) {
         return `ERR ${err.message}`;
@@ -186,6 +218,10 @@ module.exports = async function routeCommandRaw({ command, args, bypassTransacti
       const [key] = args;
       if (!key) return "ERR wrong number of arguments for DECR";
       try {
+        if (isMaster) {
+          appendToAOF(`${command} ${args.join(" ")}`);
+          replicate(command, args);
+        }
         return strings.decr(store, key);
       } catch (err) {
         return `ERR ${err.message}`;
@@ -197,6 +233,10 @@ module.exports = async function routeCommandRaw({ command, args, bypassTransacti
       if (!key || value === undefined)
         return "ERR wrong number of arguments for INCRBY";
       try {
+        if (isMaster) {
+          appendToAOF(`${command} ${args.join(" ")}`);
+          replicate(command, args);
+        }
         return strings.incrby(store, key, parseInt(value));
       } catch (err) {
         return `ERR ${err.message}`;
@@ -208,6 +248,10 @@ module.exports = async function routeCommandRaw({ command, args, bypassTransacti
       if (!key || value === undefined)
         return "ERR wrong number of arguments for DECRBY";
       try {
+        if (isMaster) {
+          appendToAOF(`${command} ${args.join(" ")}`);
+          replicate(command, args);
+        }
         return strings.incrby(store, key, -parseInt(value));
       } catch (err) {
         return `ERR ${err.message}`;
@@ -242,7 +286,10 @@ module.exports = async function routeCommandRaw({ command, args, bypassTransacti
     case "JSON.SET": {
       const [key, path, ...valueParts] = args;
       const valueStr = valueParts.join(" ");
-      appendToAOF(`JSON.SET ${key} ${path} ${valueParts}`);
+      if (isMaster) {
+        appendToAOF(`JSON.SET ${key} ${path} ${valueStr}`);
+        replicate("JSON.SET", [key, path, valueStr]);
+      }
       return json.set(store, key, path, valueStr);
     }
 
@@ -255,7 +302,10 @@ module.exports = async function routeCommandRaw({ command, args, bypassTransacti
     case "JSON.DEL": {
       const [key, path] = args;
       if (!key) return "ERR wrong number of arguments for JSON.DEL";
-      appendToAOF(`JSON.DEL ${key} ${path}`);
+      if (isMaster) {
+        appendToAOF(`JSON.DEL ${key} ${path}`);
+        replicate("JSON.DEL", [key, path]);
+      }
       return json.del(store, key, path);
     }
 
@@ -264,7 +314,10 @@ module.exports = async function routeCommandRaw({ command, args, bypassTransacti
       if (!key || !path || values.length === 0) {
         return "ERR wrong number of arguments for 'JSON.ARRAPPEND'";
       }
-
+      if (isMaster) {
+        appendToAOF(`${command} ${args.join(" ")}`);
+        replicate(command, args);
+      }
       return json.arrappend(store, key, path, ...values);
     }
 
@@ -275,7 +328,10 @@ module.exports = async function routeCommandRaw({ command, args, bypassTransacti
       if (!key || values.length === 0)
         return "ERR wrong number of arguments for LPUSH";
       try {
-        appendToAOF(`LPUSH ${key} ${values.join(" ")}`);
+        if (isMaster) {
+          appendToAOF(`${command} ${args.join(" ")}`);
+          replicate(command, args);
+        }
         return list.lpush(store, key, ...values);
       } catch (err) {
         return `ERR ${err.message}`;
@@ -287,7 +343,10 @@ module.exports = async function routeCommandRaw({ command, args, bypassTransacti
       if (!key || values.length === 0)
         return "ERR wrong number of arguments for RPUSH";
       try {
-        appendToAOF(`RPUSH ${key} ${values.join(" ")}`);
+        if (isMaster) {
+          appendToAOF(`${command} ${args.join(" ")}`);
+          replicate(command, args);
+        }
         return list.rpush(store, key, ...values);
       } catch (err) {
         return `ERR ${err.message}`;
@@ -299,7 +358,10 @@ module.exports = async function routeCommandRaw({ command, args, bypassTransacti
       if (!key) return "ERR wrong number of arguments for LPOP";
       try {
         const value = list.lpop(store, key);
-        appendToAOF(`LPOP ${args[0]}`);
+        if (isMaster) {
+          appendToAOF(`${command} ${args.join(" ")}`);
+          replicate(command, args);
+        }
         return value === null ? "(nil)" : `"${value}"`;
       } catch (err) {
         return `ERR ${err.message}`;
@@ -311,7 +373,10 @@ module.exports = async function routeCommandRaw({ command, args, bypassTransacti
       if (!key) return "ERR wrong number of arguments for RPOP";
       try {
         const value = list.rpop(store, key);
-        appendToAOF(`RPOP ${args[0]}`);
+        if (isMaster) {
+          appendToAOF(`${command} ${args.join(" ")}`);
+          replicate(command, args);
+        }
         return value === null ? "(nil)" : `"${value}"`;
       } catch (err) {
         return `ERR ${err.message}`;
@@ -352,7 +417,10 @@ module.exports = async function routeCommandRaw({ command, args, bypassTransacti
       const index = parseInt(indexStr);
       if (isNaN(index)) return "ERR index is not an integer";
       try {
-        appendToAOF(`LSET ${key} ${indexStr} ${value}`);
+        if (isMaster) {
+          appendToAOF(`LSET ${key} ${indexStr} ${value}`);
+          replicate(command, args);
+        }
         return list.lset(store, key, index, value);
       } catch (err) {
         return `ERR ${err.message}`;
@@ -366,7 +434,10 @@ module.exports = async function routeCommandRaw({ command, args, bypassTransacti
       if (!key || members.length === 0)
         return "ERR wrong number of arguments for SADD";
       try {
-        appendToAOF(`SADD ${key} ${members.join(" ")}`);
+        if (isMaster) {
+          appendToAOF(`${command} ${args.join(" ")}`);
+          replicate(command, args);
+        }
         return sets.sadd(store, key, ...members);
       } catch (err) {
         return `ERR ${err.message}`;
@@ -378,7 +449,10 @@ module.exports = async function routeCommandRaw({ command, args, bypassTransacti
       if (!key || members.length === 0)
         return "ERR wrong number of arguments for SREM";
       try {
-        appendToAOF(`SREM ${key} ${members.join(" ")}`);
+        if (isMaster) {
+          appendToAOF(`${command} ${args.join(" ")}`);
+          replicate(command, args);
+        }
         return sets.srem(store, key, ...members);
       } catch (err) {
         return `ERR ${err.message}`;
@@ -420,6 +494,10 @@ module.exports = async function routeCommandRaw({ command, args, bypassTransacti
       const [key] = args;
       if (!key) return "ERR wrong number of arguments for SPOP";
       try {
+        if (isMaster) {
+          appendToAOF(`${command} ${args.join(" ")}`);
+          replicate(command, args);
+        }
         return sets.spop(store, key);
       } catch (err) {
         return `ERR ${err.message}`;
@@ -439,6 +517,10 @@ module.exports = async function routeCommandRaw({ command, args, bypassTransacti
     case "SUNION": {
       if (args.length === 0) return "ERR wrong number of arguments for SUNION";
       try {
+        if (isMaster) {
+          appendToAOF(`SUNION ${args.join(" ")}`);
+          replicate(command, args);
+        }
         return sets.sunion(store, ...args);
       } catch (err) {
         return `ERR ${err.message}`;
@@ -448,6 +530,10 @@ module.exports = async function routeCommandRaw({ command, args, bypassTransacti
     case "SINTER": {
       if (args.length === 0) return "ERR wrong number of arguments for SINTER";
       try {
+        if (isMaster) {
+          appendToAOF(`SINTER ${args.join(" ")}`);
+          replicate(command, args);
+        }
         return sets.sinter(store, ...args);
       } catch (err) {
         return `ERR ${err.message}`;
@@ -457,6 +543,10 @@ module.exports = async function routeCommandRaw({ command, args, bypassTransacti
     case "SDIFF": {
       if (args.length === 0) return "ERR wrong number of arguments for SDIFF";
       try {
+        if (isMaster) {
+          appendToAOF(`SDIFF ${args.join(" ")}`);
+          replicate(command, args);
+        }
         return sets.sdiff(store, ...args);
       } catch (err) {
         return `ERR ${err.message}`;
@@ -475,7 +565,10 @@ module.exports = async function routeCommandRaw({ command, args, bypassTransacti
         return "ERR wrong number of arguments for HSET";
 
       try {
-        appendToAOF(`HSET ${key} ${fieldValuePairs}`);
+        if (isMaster) {
+          appendToAOF(`HSET ${key} ${fieldValuePairs.join(" ")}`);
+          replicate("HSET", [key, ...fieldValuePairs]);
+        }
         return hashes.hset(store, key, ...fieldValuePairs);
       } catch (err) {
         return `ERR ${err.message}`;
@@ -505,6 +598,10 @@ module.exports = async function routeCommandRaw({ command, args, bypassTransacti
         return "ERR wrong number of arguments for HMSET";
 
       try {
+        if (isMaster) {
+          appendToAOF(`HMSET ${key} ${fieldValuePairs}`);
+          replicate(command, args);
+        }
         return hashes.hmset(store, key, ...fieldValuePairs);
       } catch (err) {
         return `ERR ${err.message}`;
@@ -530,7 +627,10 @@ module.exports = async function routeCommandRaw({ command, args, bypassTransacti
         return "ERR wrong number of arguments for HDEL";
 
       try {
-        appendToAOF(`HDEL ${key} ${fields.join(" ")}`);
+        if (isMaster) {
+          appendToAOF(`HDEL ${key} ${fields.join(" ")}`);
+          replicate(command, args);
+        }
         return hashes.hdel(store, key, ...fields);
       } catch (err) {
         return `ERR ${err.message}`;
@@ -559,7 +659,10 @@ module.exports = async function routeCommandRaw({ command, args, bypassTransacti
       try {
         const result = sortedSets.zadd(store, key, ...argsRest);
         if (result === null) return "(nil)";
-        appendToAOF(`ZADD ${key} ${argsRest.join(" ")}`);
+        if (isMaster) {
+          appendToAOF(`ZADD ${key} ${argsRest.join(" ")}`);
+          replicate("ZADD", [key, ...argsRest]);
+        }
         return result;
       } catch (err) {
         return `ERR ${err.message}`;
@@ -599,7 +702,10 @@ module.exports = async function routeCommandRaw({ command, args, bypassTransacti
         return "ERR wrong number of arguments for ZREM";
 
       try {
-        appendToAOF(`ZREM ${key} ${members.join(" ")}`);
+        if (isMaster) {
+          appendToAOF(`ZREM ${key} ${members.join(" ")}`);
+          replicate(command, args);
+        }
         return sortedSets.zrem(store, key, ...members);
       } catch (err) {
         return `ERR ${err.message}`;
@@ -628,7 +734,10 @@ module.exports = async function routeCommandRaw({ command, args, bypassTransacti
       }
 
       try {
-        appendToAOF(`XADD ${key} ${id} ${fieldValues}`);
+        if (isMaster) {
+          appendToAOF(`XADD ${key} ${id} ${fieldValues.join(" ")}`);
+          replicate("XADD", [key, id, ...fieldValues]);
+        }
         return streams.xadd(store, key, id, ...fieldValues);
       } catch (err) {
         return `ERR ${err.message}`;
@@ -696,6 +805,10 @@ module.exports = async function routeCommandRaw({ command, args, bypassTransacti
         if (!key || !group || !id)
           return "ERR wrong number of arguments for XGROUP CREATE";
         try {
+          if (isMaster) {
+            appendToAOF(`XGROUP CREATE ${key} ${group} ${id}`);
+            replicate(command, args);
+          }
           return streams.xgroupCreate(store, key, group, id);
         } catch (err) {
           return `ERR ${err.message}`;
@@ -740,6 +853,10 @@ module.exports = async function routeCommandRaw({ command, args, bypassTransacti
       if (!key || !group || ids.length === 0)
         return "ERR wrong number of arguments for XACK";
       try {
+        if (isMaster) {
+          appendToAOF(`XACK ${key} ${group} ${ids}`);
+          replicate(command, args);
+        }
         return streams.xack(store, key, group, ...ids);
       } catch (err) {
         return `ERR ${err.message}`;
@@ -761,7 +878,10 @@ module.exports = async function routeCommandRaw({ command, args, bypassTransacti
       if (bit !== 0 && bit !== 1) return "ERR bit is not 0 or 1";
 
       try {
-        appendToAOF(`BITSET ${key} ${offsetStr} ${bitStr}`);
+        if (isMaster) {
+          appendToAOF(`BITSET ${key} ${offsetStr} ${bitStr}`);
+          replicate(command, args);
+        }
         return bitmaps.setbit(store, key, offset, bit);
       } catch (err) {
         return `ERR ${err.message}`;
@@ -808,6 +928,7 @@ module.exports = async function routeCommandRaw({ command, args, bypassTransacti
 
       const op = opRaw.toUpperCase();
       try {
+        if (isMaster) replicate(command, args);
         return bitmaps.bitop(store, op, destKey, ...srcKeys);
       } catch (err) {
         return `ERR ${err.message}`;
@@ -825,7 +946,10 @@ module.exports = async function routeCommandRaw({ command, args, bypassTransacti
       if (isNaN(lon) || isNaN(lat)) return "ERR invalid longitude or latitude";
 
       try {
-        appendToAOF(`GEOADD ${key} ${lonStr} ${latStr} ${member}`);
+        if (isMaster) {
+          appendToAOF(`GEOADD ${key} ${lonStr} ${latStr} ${member}`);
+          replicate(command, args);
+        }
         return geo.geoadd(store, key, lon, lat, member);
       } catch (err) {
         return `ERR ${err.message}`;
@@ -876,6 +1000,7 @@ module.exports = async function routeCommandRaw({ command, args, bypassTransacti
       }
 
       try {
+        if (isMaster) replicate(command, args);
         return bitfields.handle(store, key, subcommands);
       } catch (err) {
         return `ERR ${err.message}`;
@@ -890,8 +1015,9 @@ module.exports = async function routeCommandRaw({ command, args, bypassTransacti
 
       try {
         const result = hyperloglog.pfadd(store, key, elements);
-        if (result === 1) {
+        if (isMaster && result === 1) {
           appendToAOF(`PFADD ${key} ${elements.join(" ")}`);
+          replicate("PFADD", [key, ...elements]);
         }
         return result;
       } catch (err) {
@@ -918,7 +1044,10 @@ module.exports = async function routeCommandRaw({ command, args, bypassTransacti
 
       try {
         const result = hyperloglog.pfmerge(store, destKey, sourceKeys);
-        appendToAOF(`PFMERGE ${destKey} ${sourceKeys.join(" ")}`);
+        if (isMaster) {
+          appendToAOF(`PFMERGE ${destKey} ${sourceKeys.join(" ")}`);
+          replicate("PFMERGE", [destKey, ...sourceKeys]);
+        }
         return result;
       } catch (err) {
         return `ERR ${err.message}`;
@@ -930,6 +1059,10 @@ module.exports = async function routeCommandRaw({ command, args, bypassTransacti
       const [key, errorRateStr, capacityStr] = args;
       if ([key, errorRateStr, capacityStr].some((v) => v === undefined))
         return "ERR wrong number of arguments";
+      if (isMaster) {
+        appendToAOF(`BF.RESERVE ${key} ${errorRateStr} ${capacityStr}`);
+        replicate(command, args);
+      }
       return bloomfilter.reserve(store, key, errorRateStr, capacityStr);
     }
 
@@ -937,7 +1070,10 @@ module.exports = async function routeCommandRaw({ command, args, bypassTransacti
       const [key, value] = args;
       const result = bloomfilter.add(store, key, value);
       if (typeof result === "string") return result;
-      logAOF("BF.ADD", [key, value]);
+      if (isMaster && typeof result !== "string") {
+        logAOF("BF.ADD", [key, value]);
+        replicate("BF.ADD", [key, value]);
+      }
       return result;
     }
 
@@ -955,6 +1091,7 @@ module.exports = async function routeCommandRaw({ command, args, bypassTransacti
     case "CF.ADD": {
       const [key, item] = args;
       if (!key || !item) return "ERR wrong number of arguments";
+      if (isMaster) replicate("CF.ADD", [key, item]);
       return cuckoo.add(store, key, item);
     }
     case "CF.EXISTS": {
@@ -965,6 +1102,7 @@ module.exports = async function routeCommandRaw({ command, args, bypassTransacti
     case "CF.DEL": {
       const [key, item] = args;
       if (!key || !item) return "ERR wrong number of arguments";
+      if (isMaster) replicate(command, args);
       return cuckoo.del(store, key, item);
     }
 
@@ -973,6 +1111,7 @@ module.exports = async function routeCommandRaw({ command, args, bypassTransacti
     case "TS.CREATE": {
       const [key] = args;
       if (!key) return "ERR wrong number of arguments for 'TS.CREATE'";
+      if (isMaster) replicate(command, args);
       return timeseries.create(store, key);
     }
 
@@ -980,6 +1119,7 @@ module.exports = async function routeCommandRaw({ command, args, bypassTransacti
       const [key, timestamp, value] = args;
       if (!key || !timestamp || !value)
         return "ERR wrong number of arguments for 'TS.ADD'";
+      if (isMaster) replicate("TS.ADD", [key, timestamp, value]);
       return timeseries.add(store, key, timestamp, value);
     }
 
