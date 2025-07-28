@@ -1,4 +1,3 @@
-
 const { performance } = require("perf_hooks");
 const handleCommand = require("../network/commandRouter");
 
@@ -47,7 +46,11 @@ async function benchmarkCommand(command, argsFactory) {
   await benchmarkCommand("ZRANGE", () => ["myzset", "0", "10"]);
 
   // JSON
-  await benchmarkCommand("JSON.SET", (i) => ["myjson", "$.key" + i, JSON.stringify(i)]);
+  await benchmarkCommand("JSON.SET", (i) => [
+    "myjson",
+    "$.key" + i,
+    JSON.stringify(i),
+  ]);
   await benchmarkCommand("JSON.GET", (i) => ["myjson", "$.key" + i]);
 
   // Streams
@@ -59,13 +62,24 @@ async function benchmarkCommand(command, argsFactory) {
   await benchmarkCommand("GETBIT", (i) => ["mybitmap", i.toString()]);
 
   // Geospatial
-  await benchmarkCommand("GEOADD", (i) => ["mygeo", "12.34", "56.78", "loc" + i]);
+  await benchmarkCommand("GEOADD", (i) => [
+    "mygeo",
+    "12.34",
+    "56.78",
+    "loc" + i,
+  ]);
   await benchmarkCommand("GEODIST", () => ["mygeo", "loc0", "loc1", "km"]);
 
   // Bitfields
   await benchmarkCommand("BITFIELD", (i) => ["bfkey", "SET", "i8", i % 10, i]);
   await benchmarkCommand("BITFIELD", (i) => ["bfkey", "GET", "i8", i % 10]);
-  await benchmarkCommand("BITFIELD", (i) => ["bfkey", "INCRBY", "i8", i % 10, "1"]);
+  await benchmarkCommand("BITFIELD", (i) => [
+    "bfkey",
+    "INCRBY",
+    "i8",
+    i % 10,
+    "1",
+  ]);
 
   // HyperLogLog
   await benchmarkCommand("PFADD", (i) => ["hll", `user${i}`]);
@@ -90,7 +104,11 @@ async function benchmarkCommand(command, argsFactory) {
     (i * 100).toString(),
     (25 + (i % 5)).toString(),
   ]);
-  await benchmarkCommand("TS.RANGE", () => ["temp", "0", (totalOps * 100).toString()]);
+  await benchmarkCommand("TS.RANGE", () => [
+    "temp",
+    "0",
+    (totalOps * 100).toString(),
+  ]);
   await benchmarkCommand("TS.RANGE", () => [
     "temp",
     "0",
@@ -120,7 +138,6 @@ async function benchmarkCommand(command, argsFactory) {
     )}ms => ${txOpsPerSec.toFixed(2)} tx/sec`
   );
 
-  
   // Pub/Sub
   console.log("\n⏱️ Benchmarking Pub/Sub messaging");
 
@@ -149,6 +166,11 @@ async function benchmarkCommand(command, argsFactory) {
     )}ms => ${pubOpsPerSec.toFixed(2)} msg/sec`
   );
   console.log(`Received: ${received}/${totalOps} messages`);
+
+  // Monitoring & Management
+  console.log("\n⏱️ Benchmarking Monitoring: INFO and SLOWLOG");
+  await benchmarkCommand("INFO", () => []);
+  await benchmarkCommand("SLOWLOG", () => []);
 
   console.log("\n🎉 All benchmarks completed!");
 })();

@@ -62,6 +62,15 @@ class RedisClient {
       attemptConnection();
     });
   }
+  async send(command, args = []) {
+    return new Promise((resolve) => {
+      this.socket.once("data", (data) => {
+        resolve(data.toString());
+      });
+
+      this.socket.write(`${command} ${args.join(" ")}\r\n`);
+    });
+  }
 
   sendCommand(command, args = []) {
     return new Promise((resolve, reject) => {

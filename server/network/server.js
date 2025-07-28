@@ -1,4 +1,3 @@
-// server/network/server.js
 const net = require("net");
 const readline = require("readline");
 const { commandParser } = require("./commandParser");
@@ -12,6 +11,7 @@ const {
   getRole,
   handleSlaveConnection,
 } = require("../services/replicationService");
+const { registerClient, unregisterClient } = require("../core/monitoring");
 
 function replayAOF() {
   const commands = loadAOF();
@@ -33,12 +33,24 @@ function startTCPServer(port = 6379) {
     replayAOF();
 
     const server = net.createServer((socket) => {
-      // Simple CLI over TCP for clients
+      const clientId = `${socket.remoteAddress}:${socket.remotePort}`;
+      registerClient(clientId);
+
       socket.write("Welcome to Redis-like server! Type your commands:\n");
-      const rl = readline.createInterface({ input: socket, output: socket });
+
+      const rl = readline.createInterface({
+        input: socket,
+        output: socket,
+        prompt: "redis-like> ",
+      });
+
+      rl.prompt();
 
       rl.on("line", async (line) => {
-        const parsed = commandParser(line);
+        const trimmed = line.trim();
+        if (!trimmed) return rl.prompt();
+
+        const parsed = commandParser(trimmed);
         const result = await routeCommand(parsed);
 
         if (Array.isArray(result)) {
@@ -49,12 +61,19 @@ function startTCPServer(port = 6379) {
               socket.write(`${i + 1}) ${item}\n`);
             }
           });
+        } else if (typeof result === "number") {
+          socket.write(`(integer) ${result}\n`);
         } else {
           socket.write(result + "\n");
         }
+
+        rl.prompt();
       });
 
-      socket.on("close", () => rl.close());
+      socket.on("close", () => {
+        unregisterClient(clientId);
+        rl.close();
+      });
     });
 
     server.listen(port, () => {
