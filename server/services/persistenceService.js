@@ -7,8 +7,16 @@ const { getRole } = require("../services/replicationService");
 const AOF_PATH = path.join(__dirname, "../data/appendonly.aof");
 const SNAPSHOT_FILE = path.join(__dirname, "../data/dump.json");
 
+let isReplayingAOF = false;
+
+function setReplayingAOF(value) {
+  isReplayingAOF = value;
+}
+
 function appendToAOF(commandLine) {
   if (getRole() !== "master") return;
+  if (isReplayingAOF) return;
+
   fs.appendFile(AOF_PATH, commandLine + "\n", (err) => {
     if (err) console.error("AOF Write Error:", err);
   });
@@ -116,4 +124,5 @@ module.exports = {
   saveSnapshot,
   loadSnapshot,
   bgSaveSnapshot,
+  setReplayingAOF,
 };

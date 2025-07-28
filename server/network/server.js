@@ -6,6 +6,7 @@ const {
   loadAOF,
   loadSnapshot,
   saveSnapshot,
+  setReplayingAOF,
 } = require("../services/persistenceService");
 const {
   getRole,
@@ -16,6 +17,8 @@ const { registerClient, unregisterClient } = require("../core/monitoring");
 function replayAOF() {
   const commands = loadAOF();
   console.log(`🔁 Replaying ${commands.length} AOF commands...`);
+  setReplayingAOF(true);
+
   for (const line of commands) {
     try {
       const { command, args } = commandParser(line);
@@ -24,6 +27,8 @@ function replayAOF() {
       console.error(`❌ Error replaying: ${line}`, err.message);
     }
   }
+
+  setReplayingAOF(false);
 }
 
 function startTCPServer(port = 6379) {
