@@ -1,92 +1,88 @@
 // server/services/replicationService.js
 const net = require("net");
-const store = require("../core/datastore");
+const { exportSnapshot, importSnapshot } = require("../core/datastore");
+const { commandParser } = require("../network/commandParser");
 const routeCommand = require("../network/commandRouter");
 
-let role = "master"; // Default role
-const connectedSlaves = new Set(); // Slave sockets
-
-function setRole(newRole) {
-  role = newRole;
-}
+let role = "master";
+const slaves = [];
 
 function getRole() {
   return role;
 }
 
-// Called by master to forward writes to slaves
+function setRole(newRole) {
+  role = newRole;
+}
+
+function addSlave(socket) {
+  slaves.push(socket);
+  console.log(`🟢 New slave connected (${slaves.length} total)`);
+
+  // 🔄 Send initial snapshot
+  const snapshot = JSON.stringify(exportSnapshot());
+  socket.write(`__SYNC__::${snapshot}\n`);
+}
+
 function forwardToSlaves(command, args) {
-  if (role !== "master") return;
-
-  const payload = JSON.stringify({ command, args });
-
-  for (const socket of connectedSlaves) {
-    socket.write(payload + "\n");
+  const serialized = JSON.stringify({ command, args });
+  for (const socket of slaves) {
+    socket.write(`__CMD__::${serialized}\n`);
   }
 }
 
-// Slave connects to master, performs initial sync and listens
-function connectToMaster(host, port = 6379) {
-  return new Promise((resolve, reject) => {
-    const socket = net.createConnection(port, host, () => {
-      console.log(`🔗 Connected to master at ${host}:${port}`);
-    });
+function handleSlaveConnection(socket) {
+  addSlave(socket);
 
-    let buffer = "";
-    socket.on("data", async (chunk) => {
-      buffer += chunk.toString();
-
-      let newlineIndex;
-      while ((newlineIndex = buffer.indexOf("\n")) !== -1) {
-        const line = buffer.slice(0, newlineIndex);
-        buffer = buffer.slice(newlineIndex + 1);
-
-        try {
-          const { command, args } = JSON.parse(line);
-          await routeCommand({ command, args }, true); // bypass replication
-        } catch (err) {
-          console.error("❌ Failed to apply command from master:", err.message);
-        }
+  socket.on("data", async (chunk) => {
+    const lines = chunk.toString().split("\n").filter(Boolean);
+    for (const line of lines) {
+      if (line.startsWith("__CMD__::")) {
+        const { command, args } = JSON.parse(line.replace("__CMD__::", ""));
+        await routeCommand({ command, args, bypassTransaction: true });
       }
-    });
+    }
+  });
 
-    socket.on("error", (err) => {
-      console.error("❌ Connection error with master:", err.message);
-      reject(err);
-    });
-
-    socket.on("end", () => {
-      console.warn("⚠️ Disconnected from master");
-    });
-
-    resolve();
+  socket.on("close", () => {
+    const i = slaves.indexOf(socket);
+    if (i !== -1) slaves.splice(i, 1);
   });
 }
 
-// Called by master when a new slave connects
-function handleSlaveConnection(socket) {
-  console.log("📡 Slave connected");
-  connectedSlaves.add(socket);
+function connectToMaster(host, port) {
+  setRole("slave");
+  const socket = net.createConnection({ host, port }, () => {
+    console.log(`🔗 Connected to master at ${host}:${port}`);
+  });
 
-  // Initial sync: serialize all data
-  const snapshot = store.exportSnapshot(); // exportSnapshot must return a JS object
+  socket.on("data", async (chunk) => {
+    const lines = chunk.toString().split("\n").filter(Boolean);
+    for (const line of lines) {
+      if (line.startsWith("__SYNC__::")) {
+        const snapshot = JSON.parse(line.replace("__SYNC__::", ""));
+        importSnapshot(snapshot);
+        console.log("✅ Initial snapshot synced from master");
+      } else if (line.startsWith("__CMD__::")) {
+        const { command, args } = JSON.parse(line.replace("__CMD__::", ""));
+        await routeCommand({ command, args, bypassTransaction: true });
+      }
+    }
+  });
 
-  for (const key of Object.keys(snapshot)) {
-    const value = snapshot[key];
-    const payload = JSON.stringify({ command: "SET", args: [key, value] });
-    socket.write(payload + "\n");
-  }
+  socket.on("close", () => {
+    console.log("🔌 Disconnected from master.");
+  });
 
-  socket.on("end", () => {
-    connectedSlaves.delete(socket);
-    console.log("❌ Slave disconnected");
+  socket.on("error", (err) => {
+    console.error("❌ Replication error:", err.message);
   });
 }
 
 module.exports = {
-  setRole,
   getRole,
-  forwardToSlaves,
-  connectToMaster,
+  setRole,
   handleSlaveConnection,
+  connectToMaster,
+  forwardToSlaves,
 };

@@ -1,3 +1,5 @@
+// server/network/server.js
+const net = require("net");
 const readline = require("readline");
 const { commandParser } = require("./commandParser");
 const routeCommand = require("./commandRouter");
@@ -6,11 +8,14 @@ const {
   loadSnapshot,
   saveSnapshot,
 } = require("../services/persistenceService");
+const {
+  getRole,
+  handleSlaveConnection,
+} = require("../services/replicationService");
 
 function replayAOF() {
   const commands = loadAOF();
   console.log(`🔁 Replaying ${commands.length} AOF commands...`);
-
   for (const line of commands) {
     try {
       const { command, args } = commandParser(line);
@@ -21,50 +26,47 @@ function replayAOF() {
   }
 }
 
-function startServer() {
-  // Load Snapshot
+function startTCPServer(port = 6379) {
   loadSnapshot();
 
-  // Replay AOF entries to recover latest changes
-  replayAOF();
+  if (getRole() === "master") {
+    replayAOF();
 
-  const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-    prompt: "redis> ",
-  });
+    const server = net.createServer((socket) => {
+      // Simple CLI over TCP for clients
+      socket.write("Welcome to Redis-like server! Type your commands:\n");
+      const rl = readline.createInterface({ input: socket, output: socket });
 
-  rl.prompt();
+      rl.on("line", async (line) => {
+        const parsed = commandParser(line);
+        const result = await routeCommand(parsed);
 
-  // Auto-save every 30 seconds
-  setInterval(() => {
-    saveSnapshot();
-    rl.prompt();
-  }, 30000);
-
-  rl.on("line", async (input) => {
-    const parsed = commandParser(input);
-    const result = await routeCommand(parsed);
-
-    // Redis-style CLI output formatting
-    if (Array.isArray(result)) {
-      result.forEach((item, i) => {
-        if (typeof item === "number") {
-          console.log(`${i + 1}) (integer) ${item}`);
+        if (Array.isArray(result)) {
+          result.forEach((item, i) => {
+            if (typeof item === "number") {
+              socket.write(`${i + 1}) (integer) ${item}\n`);
+            } else {
+              socket.write(`${i + 1}) ${item}\n`);
+            }
+          });
         } else {
-          console.log(`${i + 1}) ${item}`);
+          socket.write(result + "\n");
         }
       });
-    } else {
-      console.log(result);
-    }
 
-    rl.prompt();
-  }).on("close", () => {
+      socket.on("close", () => rl.close());
+    });
+
+    server.listen(port, () => {
+      console.log(`🚀 Redis-like master node running on port ${port}`);
+    });
+  } else {
+    console.log(`🛰️ Redis-like slave node running (no TCP listener)`);
+  }
+
+  setInterval(() => {
     saveSnapshot();
-    console.log("Bye!");
-    process.exit(0);
-  });
+  }, 30000);
 }
 
-module.exports = startServer;
+module.exports = startTCPServer;
