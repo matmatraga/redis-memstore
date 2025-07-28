@@ -104,6 +104,65 @@ class DataStore {
       this.expirations.set(key, expireAt);
     }
   }
+
+  getKeyspaceStats() {
+    const stats = {};
+    for (const [key, value] of this.store.entries()) {
+      if (this._isExpired(key)) continue;
+
+      let type = typeof value;
+
+      // Handle known data structures
+      if (Array.isArray(value)) {
+        type = "lists";
+      } else if (value instanceof Set) {
+        type = "sets";
+      } else if (
+        value &&
+        typeof value === "object" &&
+        value.__type === "sortedset"
+      ) {
+        type = "sortedsets";
+      } else if (
+        value &&
+        typeof value === "object" &&
+        value.__type === "stream"
+      ) {
+        type = "streams";
+      } else if (
+        value &&
+        typeof value === "object" &&
+        value.__type === "bitmap"
+      ) {
+        type = "bitmaps";
+      } else if (
+        value &&
+        typeof value === "object" &&
+        value.__type === "hash"
+      ) {
+        type = "hashes";
+      } else if (
+        value &&
+        typeof value === "object" &&
+        value.__type === "json"
+      ) {
+        type = "json";
+      } else if (value && typeof value === "object" && value.__type === "geo") {
+        type = "geospatial";
+      } else if (
+        value &&
+        typeof value === "object" &&
+        value.__type === "timeseries"
+      ) {
+        type = "timeseries";
+      } else {
+        type = "strings";
+      }
+
+      stats[type] = (stats[type] || 0) + 1;
+    }
+    return stats;
+  }
 }
 
 module.exports = new DataStore();

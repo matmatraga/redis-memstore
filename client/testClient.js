@@ -1,9 +1,17 @@
 const RedisClient = require("./redisClient");
-const client = new RedisClient();
 
-(async () => {
-  await client.connect();
-  console.log(await client.set("foo", "bar"));
-  console.log(await client.get("foo"));
-  await client.quit();
-})();
+if (require.main === module) {
+  (async () => {
+    const client = new RedisClient();
+
+    try {
+      await client.connect();
+
+      console.log(await client.send("SET", ["monitor:test", "123"]));
+      console.log(await client.send("INFO", []));
+      console.log(await client.send("SLOWLOG", []));
+    } catch (err) {
+      console.error("❌ Error:", err);
+    }
+  })();
+}

@@ -1,35 +1,173 @@
-SET foo bar
-SET foo bar
-SET foo bar
-SET foo bar
-SET foo bar
-SET foo bar
-SET foo bar
-SET foo bar
-SET foo bar
-SET foo bar
-SET foo bar
-SET foo bar
-SET foo bar
-SET foo bar
-SET foo bar
-SET foo bar
-SET foo bar
-SET foo bar
-SET foo bar
-SET foo bar
-SET foo bar
-SET foo bar
-SET foo bar
-SET foo bar
-SET foo bar
-SET foo bar
-SET foo bar
-SET foo bar
-SET foo bar
-SET foo bar
-SET foo bar
-SET foo bar
-SET foo bar
-SET foo bar
-SET foo bar
+SET foo1 undefined
+INCR foo
+SET foo1 undefined
+INCR foo
+SET foo 123
+SET testkey 123
+SET testkey 123
+INCR testkey
+INCR testkey
+CF.RESERVE cf 100
+CF.RESERVE cf 50
+CF.ADD cf apple
+CF.RESERVE cf 50
+CF.ADD cf banana
+CF.RESERVE cf 50
+CF.ADD cf cherry
+CF.DEL cf cherry
+CF.RESERVE cf 20
+TS.CREATE temp
+TS.CREATE temp
+TS.ADD temp 100 25.5
+TS.CREATE temp
+TS.ADD temp 0 25
+TS.ADD temp 100 26
+TS.ADD temp 200 27
+TS.CREATE temp
+TS.ADD temp 100 26.5
+TS.ADD temp 200 27.5
+TS.CREATE ts
+TS.ADD ts 0 10
+TS.ADD ts 100 20
+TS.ADD ts 200 30
+TS.ADD ts 300 40
+TS.CREATE temp
+TS.CREATE temp
+TS.ADD temp 100 25.5
+TS.ADD temp 100 26
+TS.ADD temp 0 25
+TS.CREATE temp
+TS.ADD temp 200 27
+TS.ADD temp 200 27.5
+TS.CREATE temp
+TS.ADD temp 100 26.5
+TS.ADD ts 0 10
+TS.ADD ts 100 20
+TS.CREATE ts
+TS.ADD ts 200 30
+TS.ADD ts 300 40
+SET testkey 123
+SET testkey 123
+INCR testkey
+INCR testkey
+CF.RESERVE cf 100
+CF.RESERVE cf 50
+CF.RESERVE cf 50
+CF.ADD cf apple
+CF.ADD cf banana
+CF.RESERVE cf 50
+CF.RESERVE cf 20
+CF.ADD cf cherry
+CF.DEL cf cherry
+SET testkey 123
+SET testkey 123
+CF.ADD cf apple
+INCR testkey
+CF.RESERVE cf 50
+INCR testkey
+CF.ADD cf banana
+CF.RESERVE cf 100
+CF.RESERVE cf 50
+CF.DEL cf cherry
+CF.ADD cf cherry
+CF.RESERVE cf 20
+CF.RESERVE cf 50
+TS.CREATE temp
+TS.CREATE temp
+TS.CREATE temp
+TS.ADD temp 100 25.5
+TS.ADD temp 0 25
+TS.ADD temp 200 27
+TS.ADD temp 100 26
+TS.CREATE temp
+TS.ADD temp 100 26.5
+TS.ADD temp 200 27.5
+TS.CREATE ts
+TS.ADD ts 0 10
+TS.ADD ts 100 20
+TS.ADD ts 200 30
+TS.ADD ts 300 40
+SET testkey 123
+SET testkey 123
+INCR testkey
+INCR testkey
+TS.CREATE temp
+TS.CREATE temp
+TS.ADD temp 100 25.5
+TS.CREATE temp
+TS.ADD temp 100 26
+TS.ADD temp 0 25
+TS.ADD temp 200 27
+TS.CREATE temp
+TS.ADD temp 100 26.5
+TS.ADD temp 200 27.5
+TS.CREATE ts
+TS.ADD ts 0 10
+TS.ADD ts 100 20
+TS.ADD ts 200 30
+TS.ADD ts 300 40
+CF.RESERVE cf 100
+CF.RESERVE cf 50
+CF.RESERVE cf 50
+CF.ADD cf banana
+CF.ADD cf apple
+CF.RESERVE cf 50
+CF.RESERVE cf 20
+CF.DEL cf cherry
+CF.ADD cf cherry
+TS.CREATE temp
+TS.CREATE temp
+TS.ADD temp 100 25.5
+TS.ADD temp 100 26
+TS.ADD temp 0 25
+TS.CREATE temp
+TS.ADD temp 200 27
+TS.CREATE temp
+TS.ADD temp 100 26.5
+TS.CREATE ts
+TS.ADD ts 0 10
+TS.ADD temp 200 27.5
+TS.ADD ts 300 40
+TS.ADD ts 200 30
+TS.ADD ts 100 20
+SET testkey 123
+SET testkey 123
+INCR testkey
+INCR testkey
+CF.RESERVE cf 100
+CF.RESERVE cf 50
+CF.ADD cf apple
+CF.ADD cf banana
+CF.RESERVE cf 50
+CF.RESERVE cf 50
+CF.ADD cf cherry
+CF.DEL cf cherry
+CF.RESERVE cf 20
+SET testkey 123
+SET testkey 123
+INCR testkey
+INCR testkey
+TS.CREATE temp
+TS.ADD temp 100 25.5
+TS.CREATE temp
+TS.CREATE temp
+TS.ADD temp 0 25
+TS.ADD temp 100 26
+TS.CREATE temp
+TS.ADD temp 100 26.5
+TS.CREATE ts
+TS.ADD temp 200 27.5
+TS.ADD ts 100 20
+TS.ADD ts 0 10
+TS.ADD temp 200 27
+TS.ADD ts 200 30
+TS.ADD ts 300 40
+CF.RESERVE cf 100
+CF.RESERVE cf 50
+CF.ADD cf apple
+CF.RESERVE cf 50
+CF.ADD cf banana
+CF.RESERVE cf 50
+CF.ADD cf cherry
+CF.DEL cf cherry
+CF.RESERVE cf 20
