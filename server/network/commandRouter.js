@@ -34,6 +34,7 @@ const {
   loadAOF,
   bgSaveSnapshot,
   logAOF,
+  setReplayingAOF,
 } = require("../services/persistenceService");
 
 module.exports = async function routeCommandRaw({
@@ -190,6 +191,27 @@ module.exports = async function routeCommandRaw({
         const [key] = args;
         if (!key) return "ERR wrong number of arguments for PERSIST";
         return store.persist(key);
+      }
+
+      case "FLUSHDB": {
+        store.flush();
+        if (isMaster && !setReplayingAOF()) {
+          appendToAOF("FLUSHDB");
+        }
+        return "OK";
+      }
+
+      case "RANDOMKEY": {
+        const keys = Array.from(store.store.keys()).filter(
+          (k) => !store._isExpired(k)
+        );
+        if (keys.length === 0) return "(nil)";
+        const rand = keys[Math.floor(Math.random() * keys.length)];
+        return rand;
+      }
+
+      case "SELECT": {
+        return "OK"; // Stubbed for single DB context
       }
 
       // Strings block
