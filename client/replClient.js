@@ -10,7 +10,6 @@ const rl = readline.createInterface({
 
 const client = net.createConnection({ port: 6379, host: "127.0.0.1" }, () => {
   console.log("✅ Connected to Redis-like server (TCP)");
-  rl.prompt();
 });
 
 client.on("data", (data) => {

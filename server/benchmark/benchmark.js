@@ -172,5 +172,24 @@ async function benchmarkCommand(command, argsFactory) {
   await benchmarkCommand("INFO", () => []);
   await benchmarkCommand("SLOWLOG", () => []);
 
+  // Vector Commands
+  console.log("\n⏱️ Benchmarking Vector Commands");
+  await benchmarkCommand("VECTOR.SET", (i) => [
+    "vec" + i,
+    `[${(i % 100) + 1}, ${(i % 50) + 2}, ${(i % 25) + 3}]`,
+  ]);
+  await benchmarkCommand("VECTOR.DIST", (i) => [
+    "vec0",
+    "vec" + (i % 100),
+    "DISTANCE",
+    "euclidean",
+  ]);
+  await benchmarkCommand("VECTOR.SEARCH", () => [
+    "vec0",
+    "5",
+    "DISTANCE",
+    "cosine",
+  ]);
+
   console.log("\n🎉 All benchmarks completed!");
 })();
