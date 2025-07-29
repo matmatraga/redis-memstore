@@ -163,6 +163,16 @@ class DataStore {
     }
     return stats;
   }
+
+  getAll() {
+    const result = {};
+    for (const [key, value] of this.store.entries()) {
+      if (!this._isExpired(key)) {
+        result[key] = value;
+      }
+    }
+    return result;
+  }
 }
 
 module.exports = new DataStore();

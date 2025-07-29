@@ -94,9 +94,13 @@ function loadSnapshot() {
         typeof value.capacity === "number" &&
         typeof value.bucketSize === "number"
       ) {
-        value.buckets = value.buckets.map((bucket) =>
-          bucket.map((fp) => Buffer.from(fp.data ?? fp))
-        );
+        if (Array.isArray(value.buckets)) {
+          value.buckets = value.buckets.map((bucket) =>
+            Array.isArray(bucket)
+              ? bucket.map((fp) => Buffer.from(fp?.data ?? fp))
+              : []
+          );
+        }
       }
 
       store.store.set(key, value);
