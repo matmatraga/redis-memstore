@@ -105,6 +105,22 @@ function evaluatePath(obj, path) {
   return current.length === 1 ? current[0] : current;
 }
 
+function updatePath(obj, path, newValue) {
+  if (path.startsWith("$.") && typeof obj === "object") {
+    const segments = path.slice(2).split(".");
+    let current = obj;
+    for (let i = 0; i < segments.length - 1; i++) {
+      const seg = segments[i];
+      if (!(seg in current)) return false;
+      current = current[seg];
+    }
+    current[segments.at(-1)] = newValue;
+    return true;
+  }
+  return false;
+}
+
 module.exports = {
   evaluatePath,
+  updatePath,
 };

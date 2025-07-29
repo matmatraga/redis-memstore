@@ -15,6 +15,7 @@ const bloomfilter = require("../core/types/bloomfilter");
 const cuckoo = require("../core/types/cuckoofilter");
 const timeseries = require("../core/types/timeseries");
 const vector = require("../core/types/vector");
+const documents = require("../core/types/documents");
 const {
   incrementCommandCount,
   logIfSlow,
@@ -1208,6 +1209,29 @@ module.exports = async function routeCommandRaw({
         if (args.length !== 2 && args.length !== 4)
           return "ERR wrong number of arguments for 'VECTOR.DIST'";
         return vector.dist(args);
+      }
+
+      // Document DB Commands
+      case "DOC.SET":
+      case "DOC.GET":
+      case "DOC.DEL":
+      case "DOC.UPDATE":
+      case "DOC.ARRAPPEND":
+      case "DOC.INDEX":
+      case "DOC.FIND":
+      case "DOC.AGGREGATE":
+      case "DOC.QUERY": {
+        const handler = documents[command];
+        if (
+          isMaster &&
+          !["DOC.GET", "DOC.FIND", "DOC.AGGREGATE", "DOC.QUERY"].includes(
+            command
+          )
+        ) {
+          appendToAOF(`${command} ${args.join(" ")}`);
+          replicate(command, args);
+        }
+        return handler(args);
       }
 
       default:

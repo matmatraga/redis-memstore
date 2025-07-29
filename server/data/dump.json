@@ -1,0 +1,49 @@
+{
+  "data": {
+    "foo": "2",
+    "test1": "2",
+    "test2": "3",
+    "vec1": {
+      "type": "vector",
+      "value": [
+        1,
+        2,
+        3
+      ]
+    },
+    "vec2": {
+      "type": "vector",
+      "value": [
+        1,
+        2,
+        4
+      ]
+    },
+    "vec3": {
+      "type": "vector",
+      "value": [
+        10,
+        10,
+        10
+      ]
+    },
+    "vec4": {
+      "type": "vector",
+      "value": [
+        0,
+        1,
+        0
+      ]
+    },
+    "testkey": "125",
+    "user2": {
+      "name": "Ben",
+      "age": "28"
+    },
+    "user1": {
+      "name": "Ana",
+      "age": 30
+    }
+  },
+  "expirations": {}
+}

@@ -191,5 +191,30 @@ async function benchmarkCommand(command, argsFactory) {
     "cosine",
   ]);
 
+  // Document Commands
+  console.log("\n⏱️ Benchmarking Document Commands");
+  await benchmarkCommand("DOC.SET", (i) => [
+    "doc" + i,
+    JSON.stringify({ name: "User" + i, age: i % 100, skills: ["Node", "JS"] }),
+  ]);
+  await benchmarkCommand("DOC.GET", (i) => ["doc" + i, "$.name"]);
+  await benchmarkCommand("DOC.UPDATE", (i) => [
+    "doc" + i,
+    "$.age",
+    ((i % 100) + 1).toString(),
+  ]);
+  await benchmarkCommand("DOC.ARRAPPEND", (i) => [
+    "doc" + i,
+    "$.skills",
+    "Redis",
+  ]);
+  await handleCommand("DOC.INDEX", ["age"]);
+  await benchmarkCommand("DOC.FIND", (i) => [
+    "age",
+    ((i % 100) + 1).toString(),
+  ]);
+  await benchmarkCommand("DOC.AGGREGATE", () => ["AVG", "age"]);
+  await benchmarkCommand("DOC.QUERY", () => ["age", ">", "50"]);
+
   console.log("\n🎉 All benchmarks completed!");
 })();
