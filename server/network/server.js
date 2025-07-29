@@ -41,44 +41,48 @@ function startTCPServer(port = 6379) {
       const clientId = `${socket.remoteAddress}:${socket.remotePort}`;
       registerClient(clientId);
 
-      socket.write("Welcome to Redis-like server! Type your commands:\n");
-
-      const rl = readline.createInterface({
-        input: socket,
-        output: socket,
-        prompt: "redis-like> ",
-      });
-
-      rl.prompt();
-
-      rl.on("line", async (line) => {
-        const trimmed = line.trim();
-        if (!trimmed) return rl.prompt();
-
-        const parsed = commandParser(trimmed);
-        const result = await routeCommand(parsed);
-
-        if (Array.isArray(result)) {
-          result.forEach((item, i) => {
-            if (typeof item === "number") {
-              socket.write(`${i + 1}) (integer) ${item}\n`);
-            } else {
-              socket.write(`${i + 1}) ${item}\n`);
-            }
+      socket.write(
+        "Welcome to Redis-like server! Type your commands:\n",
+        () => {
+          const rl = readline.createInterface({
+            input: socket,
+            output: socket,
+            prompt: "redis-like> ",
           });
-        } else if (typeof result === "number") {
-          socket.write(`(integer) ${result}\n`);
-        } else {
-          socket.write(result + "\n");
+
+          rl.prompt();
+
+          rl.on("line", async (line) => {
+            const trimmed = line.trim();
+            if (!trimmed) return rl.prompt();
+
+            const parsed = commandParser(trimmed);
+            const result = await routeCommand(parsed);
+
+            if (Array.isArray(result)) {
+              const output = result
+                .map((item, i) =>
+                  typeof item === "number"
+                    ? `${i + 1}) (integer) ${item}`
+                    : `${i + 1}) ${item}`
+                )
+                .join("\n");
+              socket.write(output + "\n");
+            } else if (typeof result === "number") {
+              socket.write(`(integer) ${result}\n`);
+            } else {
+              socket.write(result + "\n");
+            }
+
+            rl.prompt();
+          });
+
+          socket.on("close", () => {
+            unregisterClient(clientId);
+            rl.close();
+          });
         }
-
-        rl.prompt();
-      });
-
-      socket.on("close", () => {
-        unregisterClient(clientId);
-        rl.close();
-      });
+      );
     });
 
     server.listen(port, () => {

@@ -14,6 +14,7 @@ const hyperloglog = require("../core/types/hyperloglog");
 const bloomfilter = require("../core/types/bloomfilter");
 const cuckoo = require("../core/types/cuckoofilter");
 const timeseries = require("../core/types/timeseries");
+const vector = require("../core/types/vector");
 const {
   incrementCommandCount,
   logIfSlow,
@@ -1181,6 +1182,32 @@ module.exports = async function routeCommandRaw({
 
       case "SLOWLOG": {
         return getSlowlog() || "empty";
+      }
+
+      // Vector Commands
+      case "VECTOR.SET": {
+        const [key, vectorString] = args;
+        if (!key || !vectorString)
+          return "ERR wrong number of arguments for 'VECTOR.SET'";
+        return vector.set(args);
+      }
+
+      case "VECTOR.GET": {
+        const [key] = args;
+        if (!key) return "ERR wrong number of arguments for 'VECTOR.GET'";
+        return vector.get(args);
+      }
+
+      case "VECTOR.SEARCH": {
+        if (args.length !== 2 && args.length !== 4)
+          return "ERR wrong number of arguments for 'VECTOR.SEARCH'";
+        return vector.search(args);
+      }
+
+      case "VECTOR.DIST": {
+        if (args.length !== 2 && args.length !== 4)
+          return "ERR wrong number of arguments for 'VECTOR.DIST'";
+        return vector.dist(args);
       }
 
       default:

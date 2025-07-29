@@ -4,3 +4,314 @@ SET test1 1
 INCR test1
 SET test2 2
 INCR test2
+VECTOR.SET vec1 [1,2,3]
+VECTOR.SET vec2 [2,2,3]
+VECTOR.SET vec3 [10,10,10]
+VECTOR.SET vec4 [0,1,0]
+SET testkey 123
+SET testkey 123
+INCR testkey
+INCR testkey
+CF.RESERVE cf 100
+CF.RESERVE cf 50
+CF.ADD cf apple
+CF.RESERVE cf 50
+CF.ADD cf banana
+CF.RESERVE cf 50
+CF.ADD cf cherry
+CF.DEL cf cherry
+CF.RESERVE cf 20
+TS.CREATE temp
+TS.CREATE temp
+TS.ADD temp 100 25.5
+TS.CREATE temp
+TS.ADD temp 0 25
+TS.ADD temp 100 26
+TS.ADD temp 100 26.5
+TS.ADD temp 200 27.5
+TS.CREATE ts
+TS.ADD ts 0 10
+TS.ADD ts 100 20
+TS.ADD temp 200 27
+TS.ADD ts 200 30
+TS.CREATE temp
+TS.ADD ts 300 40
+CF.RESERVE cf 100
+CF.RESERVE cf 50
+CF.ADD cf apple
+CF.ADD cf banana
+CF.RESERVE cf 50
+CF.RESERVE cf 50
+CF.DEL cf cherry
+CF.ADD cf cherry
+CF.RESERVE cf 20
+SET testkey 123
+SET testkey 123
+INCR testkey
+INCR testkey
+TS.CREATE temp
+TS.ADD temp 0 25
+TS.ADD temp 100 25.5
+TS.CREATE temp
+TS.ADD temp 100 26
+TS.ADD temp 200 27
+TS.CREATE temp
+TS.ADD temp 100 26.5
+TS.CREATE temp
+TS.ADD temp 200 27.5
+TS.ADD ts 0 10
+TS.ADD ts 100 20
+TS.ADD ts 200 30
+TS.CREATE ts
+TS.ADD ts 300 40
+VECTOR.SET vec1 [1,2,3]
+VECTOR.SET vec2 [4,5,6]
+VECTOR.SET vec1 [1,2,3]
+VECTOR.SET vec2 [0,1,0]
+VECTOR.SET vec1 [1,0,0]
+VECTOR.SET vec3 [10,10,10]
+VECTOR.SET vec2 [1,2,4]
+VECTOR.SET vec1 [1,2,3]
+TS.CREATE temp
+TS.CREATE temp
+TS.ADD temp 100 25.5
+TS.CREATE temp
+TS.ADD temp 0 25
+TS.ADD temp 100 26
+TS.ADD temp 200 27
+TS.CREATE temp
+TS.ADD temp 100 26.5
+TS.ADD temp 200 27.5
+TS.CREATE ts
+TS.ADD ts 0 10
+TS.ADD ts 100 20
+TS.ADD ts 200 30
+TS.ADD ts 300 40
+SET testkey 123
+SET testkey 123
+INCR testkey
+INCR testkey
+CF.RESERVE cf 100
+CF.RESERVE cf 50
+CF.ADD cf apple
+CF.RESERVE cf 50
+CF.ADD cf banana
+CF.RESERVE cf 50
+CF.ADD cf cherry
+CF.DEL cf cherry
+CF.RESERVE cf 20
+VECTOR.SET vec1 [1,2,3]
+VECTOR.SET vec2 [2,2,3]
+VECTOR.SET vec3 [10,10,10]
+VECTOR.SET vec4 [0,1,0]
+VECTOR.SET vec2 [1,1,1]
+TS.CREATE temp
+TS.CREATE temp
+TS.ADD temp 100 25.5
+TS.CREATE temp
+TS.ADD temp 0 25
+TS.ADD temp 100 26
+TS.ADD temp 200 27
+TS.ADD temp 200 27.5
+TS.ADD temp 100 26.5
+TS.CREATE ts
+TS.CREATE temp
+TS.ADD ts 0 10
+TS.ADD ts 100 20
+TS.ADD ts 200 30
+TS.ADD ts 300 40
+CF.RESERVE cf 100
+CF.RESERVE cf 50
+CF.RESERVE cf 50
+CF.ADD cf banana
+CF.RESERVE cf 50
+CF.ADD cf apple
+CF.ADD cf cherry
+CF.DEL cf cherry
+CF.RESERVE cf 20
+SET testkey 123
+INCR testkey
+SET testkey 123
+INCR testkey
+VECTOR.SET vec1 [1,2,3]
+VECTOR.SET vec1 [1,2,3]
+VECTOR.SET vec2 [4,5,6]
+VECTOR.SET vec1 [1,0,0]
+VECTOR.SET vec2 [0,1,0]
+VECTOR.SET vec1 [1,2,3]
+VECTOR.SET vec2 [1,2,4]
+TS.CREATE temp
+TS.CREATE temp
+TS.ADD temp 100 26
+TS.CREATE temp
+TS.ADD temp 0 25
+TS.ADD temp 200 27
+TS.ADD temp 100 26.5
+TS.CREATE temp
+TS.ADD temp 200 27.5
+TS.ADD ts 0 10
+TS.ADD temp 100 25.5
+TS.CREATE ts
+TS.ADD ts 100 20
+TS.ADD ts 300 40
+TS.ADD ts 200 30
+CF.RESERVE cf 100
+CF.RESERVE cf 50
+CF.ADD cf apple
+CF.RESERVE cf 50
+CF.ADD cf banana
+CF.RESERVE cf 50
+CF.ADD cf cherry
+CF.DEL cf cherry
+CF.RESERVE cf 20
+SET testkey 123
+SET testkey 123
+INCR testkey
+INCR testkey
+VECTOR.SET vec1 [1,2,3]
+VECTOR.SET vec1 [1,2,3]
+VECTOR.SET vec2 [4,5,6]
+VECTOR.SET vec1 [1,0,0]
+VECTOR.SET vec2 [0,1,0]
+VECTOR.SET vec1 [1,2,3]
+VECTOR.SET vec2 [1,2,4]
+CF.RESERVE cf 100
+CF.RESERVE cf 50
+CF.ADD cf apple
+CF.ADD cf banana
+CF.RESERVE cf 50
+CF.DEL cf cherry
+CF.RESERVE cf 20
+CF.RESERVE cf 50
+CF.ADD cf cherry
+SET testkey 123
+SET testkey 123
+INCR testkey
+INCR testkey
+TS.CREATE temp
+TS.ADD temp 100 25.5
+TS.ADD temp 0 25
+TS.CREATE temp
+TS.ADD temp 100 26
+TS.ADD temp 200 27
+TS.ADD temp 200 27.5
+TS.CREATE temp
+TS.CREATE temp
+TS.ADD temp 100 26.5
+TS.ADD ts 0 10
+TS.CREATE ts
+TS.ADD ts 100 20
+TS.ADD ts 200 30
+TS.ADD ts 300 40
+VECTOR.SET vec1 [1,2,3]
+VECTOR.SET vec2 [4,5,6]
+VECTOR.SET vec1 [1,0,0]
+VECTOR.SET vec1 [1,2,3]
+VECTOR.SET vec1 [1,2,3]
+VECTOR.SET vec2 [1,2,4]
+VECTOR.SET vec2 [0,1,0]
+TS.CREATE temp
+TS.CREATE temp
+TS.ADD temp 100 25.5
+TS.CREATE temp
+TS.ADD temp 100 26
+TS.ADD temp 200 27
+TS.ADD temp 0 25
+TS.CREATE temp
+TS.ADD temp 200 27.5
+TS.ADD temp 100 26.5
+TS.CREATE ts
+TS.ADD ts 100 20
+TS.ADD ts 300 40
+TS.ADD ts 0 10
+TS.ADD ts 200 30
+SET testkey 123
+SET testkey 123
+INCR testkey
+INCR testkey
+CF.RESERVE cf 100
+CF.ADD cf apple
+CF.RESERVE cf 50
+CF.RESERVE cf 50
+CF.ADD cf banana
+CF.RESERVE cf 50
+CF.DEL cf cherry
+CF.RESERVE cf 20
+CF.ADD cf cherry
+VECTOR.SET vec1 [1,2,3]
+VECTOR.SET vec1 [1,2,3]
+VECTOR.SET vec2 [0,1,0]
+VECTOR.SET vec2 [1,2,4]
+VECTOR.SET vec2 [4,5,6]
+VECTOR.SET vec1 [1,2,3]
+VECTOR.SET vec1 [1,0,0]
+VECTOR.SET vec3 [10,10,10]
+CF.RESERVE cf 100
+CF.RESERVE cf 50
+CF.ADD cf apple
+CF.ADD cf banana
+CF.RESERVE cf 50
+CF.ADD cf cherry
+CF.RESERVE cf 50
+CF.DEL cf cherry
+CF.RESERVE cf 20
+TS.CREATE temp
+TS.ADD temp 100 25.5
+TS.CREATE temp
+TS.ADD temp 0 25
+TS.ADD temp 100 26
+TS.ADD temp 200 27
+TS.CREATE temp
+TS.ADD temp 100 26.5
+TS.CREATE ts
+TS.ADD temp 200 27.5
+TS.ADD ts 100 20
+TS.ADD ts 200 30
+TS.ADD ts 300 40
+TS.ADD ts 0 10
+TS.CREATE temp
+SET testkey 123
+SET testkey 123
+INCR testkey
+INCR testkey
+VECTOR.SET vec1 [1,2,3]
+VECTOR.SET vec1 [1,2,3]
+VECTOR.SET vec2 [4,5,6]
+VECTOR.SET vec1 [1,0,0]
+VECTOR.SET vec2 [0,1,0]
+TS.CREATE temp
+TS.CREATE temp
+TS.CREATE temp
+TS.ADD temp 100 26
+TS.ADD temp 200 27
+TS.CREATE temp
+TS.ADD temp 100 26.5
+TS.ADD temp 200 27.5
+TS.CREATE ts
+TS.ADD ts 0 10
+TS.ADD ts 100 20
+TS.ADD ts 200 30
+TS.ADD ts 300 40
+TS.ADD temp 100 25.5
+TS.ADD temp 0 25
+CF.RESERVE cf 100
+CF.ADD cf apple
+CF.RESERVE cf 50
+CF.RESERVE cf 50
+CF.RESERVE cf 50
+CF.ADD cf banana
+CF.ADD cf cherry
+CF.DEL cf cherry
+CF.RESERVE cf 20
+SET testkey 123
+SET testkey 123
+INCR testkey
+INCR testkey
+VECTOR.SET vec1 [1,2,3]
+VECTOR.SET vec1 [1,0,0]
+VECTOR.SET vec1 [1,2,3]
+VECTOR.SET vec2 [4,5,6]
+VECTOR.SET vec2 [0,1,0]
+VECTOR.SET vec2 [1,2,4]
+VECTOR.SET vec3 [10,10,10]
+VECTOR.SET vec1 [1,2,3]
