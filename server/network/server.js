@@ -75,7 +75,6 @@ function startTCPServer(port = 6379) {
 
             const result = await routeCommand({ ...parsed, clientId });
 
-            // special case for ACL WHOAMI → just output string, no "OK"
             if (
               parsed.command.toUpperCase() === "ACL" &&
               parsed.args[0]?.toUpperCase() === "WHOAMI"
