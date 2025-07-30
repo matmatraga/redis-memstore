@@ -12,8 +12,11 @@ const {
   getRole,
   handleSlaveConnection,
 } = require("../services/replicationService");
+const aclService = require("../services/aclService");
 const { registerClient, unregisterClient } = require("../core/monitoring");
+const { redisPassword } = require("../config");
 
+const authStatus = new Map();
 function replayAOF() {
   const commands = loadAOF();
   console.log(`🔁 Replaying ${commands.length} AOF commands...`);
@@ -40,6 +43,7 @@ function startTCPServer(port = 6379) {
     const server = net.createServer((socket) => {
       const clientId = `${socket.remoteAddress}:${socket.remotePort}`;
       registerClient(clientId);
+      authStatus.set(socket, !redisPassword);
 
       socket.write(
         "Welcome to Redis-like server! Type your commands:\n",
@@ -57,9 +61,27 @@ function startTCPServer(port = 6379) {
             if (!trimmed) return rl.prompt();
 
             const parsed = commandParser(trimmed);
-            const result = await routeCommand(parsed);
 
-            if (Array.isArray(result)) {
+            if (!aclService.getClientUser(clientId)) {
+              if (parsed.command !== "AUTH") {
+                socket.write("NOAUTH Authentication required\n");
+                return rl.prompt();
+              }
+
+              const result = await routeCommand({ ...parsed, clientId });
+              socket.write(result + "\n");
+              return rl.prompt();
+            }
+
+            const result = await routeCommand({ ...parsed, clientId });
+
+            // special case for ACL WHOAMI → just output string, no "OK"
+            if (
+              parsed.command.toUpperCase() === "ACL" &&
+              parsed.args[0]?.toUpperCase() === "WHOAMI"
+            ) {
+              socket.write(result + "\n");
+            } else if (Array.isArray(result)) {
               const output = result
                 .map((item, i) =>
                   typeof item === "number"
@@ -80,6 +102,7 @@ function startTCPServer(port = 6379) {
           socket.on("close", () => {
             unregisterClient(clientId);
             rl.close();
+            authStatus.delete(socket);
           });
         }
       );
