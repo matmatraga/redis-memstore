@@ -1,8 +1,11 @@
-// server/services/replicationService.js
+// Updated replicationService.js to support both TCP and TLS with snapshot sync and command forwarding
+const tls = require("tls");
 const net = require("net");
+const fs = require("fs");
+const config = require("../config");
 const { exportSnapshot, importSnapshot } = require("../core/datastore");
 const { commandParser } = require("../network/commandParser");
-const routeCommand = require("../network/commandRouter");
+const routeCommandRaw = require("../network/commandRouter.core");
 
 let role = "master";
 const slaves = [];
@@ -19,7 +22,6 @@ function addSlave(socket) {
   slaves.push(socket);
   console.log(`🟢 New slave connected (${slaves.length} total)`);
 
-  // 🔄 Send initial snapshot
   const snapshot = JSON.stringify(exportSnapshot());
   socket.write(`__SYNC__::${snapshot}\n`);
 }
@@ -39,7 +41,7 @@ function handleSlaveConnection(socket) {
     for (const line of lines) {
       if (line.startsWith("__CMD__::")) {
         const { command, args } = JSON.parse(line.replace("__CMD__::", ""));
-        await routeCommand({ command, args, bypassTransaction: true });
+        await routeCommandRaw({ command, args, bypassTransaction: true });
       }
     }
   });
@@ -50,13 +52,10 @@ function handleSlaveConnection(socket) {
   });
 }
 
-function connectToMaster(host, port) {
+function connectToMaster(host, port = 6379, useTLS = true) {
   setRole("slave");
-  const socket = net.createConnection({ host, port }, () => {
-    console.log(`🔗 Connected to master at ${host}:${port}`);
-  });
 
-  socket.on("data", async (chunk) => {
+  const handleData = async (chunk) => {
     const lines = chunk.toString().split("\n").filter(Boolean);
     for (const line of lines) {
       if (line.startsWith("__SYNC__::")) {
@@ -65,18 +64,47 @@ function connectToMaster(host, port) {
         console.log("✅ Initial snapshot synced from master");
       } else if (line.startsWith("__CMD__::")) {
         const { command, args } = JSON.parse(line.replace("__CMD__::", ""));
-        await routeCommand({ command, args, bypassTransaction: true });
+        await routeCommandRaw({ command, args, bypassTransaction: true });
       }
     }
-  });
+  };
 
-  socket.on("close", () => {
-    console.log("🔌 Disconnected from master.");
-  });
-
-  socket.on("error", (err) => {
+  const handleError = (err) => {
     console.error("❌ Replication error:", err.message);
-  });
+  };
+
+  const handleEnd = () => {
+    console.warn("⚠️  Disconnected from master.");
+  };
+
+  if (useTLS) {
+    const options = {
+      host,
+      port: config.tlsPort || 6380,
+      key: fs.readFileSync("tls/key.pem"),
+      cert: fs.readFileSync("tls/cert.pem"),
+      rejectUnauthorized: false,
+    };
+
+    const socket = tls.connect(options, () => {
+      console.log(
+        "🔐 Connected to master via TLS at",
+        `${host}:${options.port}`
+      );
+    });
+
+    socket.on("data", handleData);
+    socket.on("end", handleEnd);
+    socket.on("error", handleError);
+  } else {
+    const socket = net.createConnection({ host, port }, () => {
+      console.log("🔌 Connected to master via TCP at", `${host}:${port}`);
+    });
+
+    socket.on("data", handleData);
+    socket.on("end", handleEnd);
+    socket.on("error", handleError);
+  }
 }
 
 module.exports = {
