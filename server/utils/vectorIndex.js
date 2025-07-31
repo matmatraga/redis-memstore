@@ -1,10 +1,6 @@
 // utils/vectorIndex.js
-
-/**
- * This module will serve as a placeholder for vector indexing (e.g., HNSW or LSH)
- * to accelerate VECTOR.SEARCH commands in large-scale vector datasets.
- * For now, the logic is mocked/stubbed for future implementation.
- */
+const { exportVectorsToJSON, importVectorsFromJSON } = require("./mlInterface");
+const path = require("path");
 
 const index = new Map(); // key -> vector (copy of stored vector)
 
@@ -36,10 +32,25 @@ function searchKNN(targetVector, k, distanceFn) {
   return results.slice(0, k);
 }
 
+function saveIndexToFile(filePath) {
+  exportVectorsToJSON(filePath, index);
+  console.log(`✅ Vector index exported to ${filePath}`);
+}
+
+function loadIndexFromFile(filePath) {
+  const imported = importVectorsFromJSON(filePath);
+  for (const [key, vec] of imported.entries()) {
+    index.set(key, vec);
+  }
+  console.log(`✅ Vector index loaded from ${filePath}`);
+}
+
 module.exports = {
   addToIndex,
   removeFromIndex,
   updateIndex,
   clearIndex,
   searchKNN,
+  saveIndexToFile,
+  loadIndexFromFile,
 };
