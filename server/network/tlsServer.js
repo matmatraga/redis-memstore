@@ -1,19 +1,15 @@
 // server/tlsServer.js
 const tls = require("tls");
 const fs = require("fs");
-const path = require("path");
 const readline = require("readline");
 const { commandParser } = require("./commandParser");
 const routeCommand = require("./commandRouter");
 const { registerClient, unregisterClient } = require("../core/monitoring");
 const socketRegistry = require("./socketRegistry");
 
-const keyPath = path.join(__dirname, "../tls/key.pem");
-const certPath = path.join(__dirname, "../tls/cert.pem");
-
 const options = {
-  key: fs.readFileSync(keyPath),
-  cert: fs.readFileSync(certPath),
+  key: fs.readFileSync("server/tls/key.pem"),
+  cert: fs.readFileSync("server/tls/cert.pem"),
 };
 
 function startTLSServer(port = 6380) {
