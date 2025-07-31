@@ -60,8 +60,8 @@ async function benchmarkSetOnly() {
   return end - start;
 }
 
-(async () => {
-  console.log(`🔐 Running ACL benchmarks (${ITERATIONS} iterations)...`);
+async function runSecurityBenchmarks() {
+  console.log(`\n🔐 Running ACL benchmarks (${ITERATIONS} iterations)...`);
 
   const authOnly = await benchmarkAuthOnly();
   console.log(
@@ -77,4 +77,6 @@ async function benchmarkSetOnly() {
   console.log(
     `SET (with ACL): ${setOnly}ms (${(setOnly / ITERATIONS).toFixed(2)} ms/op)`
   );
-})();
+}
+
+module.exports = { runSecurityBenchmarks };

@@ -2,6 +2,14 @@ const { performance } = require("perf_hooks");
 const handleCommand = require("../server/network/commandRouter");
 const pubsub = require("../server/services/pubsubService");
 
+const { runVectorBenchmarks } = require("./vector.benchmark");
+const { runDocumentBenchmarks } = require("./document.benchmark");
+const { runReplicationBenchmarks } = require("./replication.benchmark");
+const { runLuaClusterBenchmarks } = require("./lua.cluster.benchmark");
+const { runMLInterfaceBenchmarks } = require("./mlInterface.benchmark");
+const { runSecurityBenchmarks } = require("./security.benchmark");
+const { runPerformanceBenchmarks } = require("./performance.benchmark");
+
 const totalOps = 100000;
 
 async function benchmarkCommand(command, argsFactory) {
@@ -162,49 +170,14 @@ async function benchmarkCommand(command, argsFactory) {
   await benchmarkCommand("INFO", () => []);
   await benchmarkCommand("SLOWLOG", () => []);
 
-  // Vector Commands
-  console.log("\n⏱️ Benchmarking Vector Commands");
-  await benchmarkCommand("VECTOR.SET", (i) => [
-    "vec" + i,
-    `[${(i % 100) + 1}, ${(i % 50) + 2}, ${(i % 25) + 3}]`,
-  ]);
-  await benchmarkCommand("VECTOR.DIST", (i) => [
-    "vec0",
-    "vec" + (i % 100),
-    "DISTANCE",
-    "euclidean",
-  ]);
-  await benchmarkCommand("VECTOR.SEARCH", () => [
-    "vec0",
-    "5",
-    "DISTANCE",
-    "cosine",
-  ]);
-
-  // Document Commands
-  console.log("\n⏱️ Benchmarking Document Commands");
-  await benchmarkCommand("DOC.SET", (i) => [
-    "doc" + i,
-    JSON.stringify({ name: "User" + i, age: i % 100, skills: ["Node", "JS"] }),
-  ]);
-  await benchmarkCommand("DOC.GET", (i) => ["doc" + i, "$.name"]);
-  await benchmarkCommand("DOC.UPDATE", (i) => [
-    "doc" + i,
-    "$.age",
-    ((i % 100) + 1).toString(),
-  ]);
-  await benchmarkCommand("DOC.ARRAPPEND", (i) => [
-    "doc" + i,
-    "$.skills",
-    "Redis",
-  ]);
-  await handleCommand({ command: "DOC.INDEX", args: ["age"] });
-  await benchmarkCommand("DOC.FIND", (i) => [
-    "age",
-    ((i % 100) + 1).toString(),
-  ]);
-  await benchmarkCommand("DOC.AGGREGATE", () => ["AVG", "age"]);
-  await benchmarkCommand("DOC.QUERY", () => ["age", ">", "50"]);
+  // Modular Benchmarks
+  await runVectorBenchmarks();
+  await runDocumentBenchmarks();
+  await runLuaClusterBenchmarks();
+  await runMLInterfaceBenchmarks();
+  await runSecurityBenchmarks();
+  await runPerformanceBenchmarks();
+  await runReplicationBenchmarks();
 
   console.log("\n🎉 All benchmarks completed!");
 })();

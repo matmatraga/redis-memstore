@@ -41,10 +41,10 @@ async function benchmarkPipeline() {
   });
 }
 
-async function main() {
-  console.log("⏱️ Benchmarking pipelined SET commands...");
+async function runPerformanceBenchmarks() {
+  console.log("\n⏱️ Benchmarking pipelined SET commands...");
   const time = await benchmarkPipeline();
   console.log(`📊 Time taken for ${ITERATIONS} pipelined SETs: ${time} ms`);
 }
 
-main();
+module.exports = { runPerformanceBenchmarks };

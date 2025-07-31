@@ -1,4 +1,3 @@
-// benchmark/replication.benchmark.js
 const { performance } = require("perf_hooks");
 const datastore = require("../server/core/datastore");
 
@@ -10,23 +9,26 @@ function generateFakeSnapshot(size) {
   return JSON.stringify({ data, expirations: {} });
 }
 
-function benchmarkImportSnapshot(size) {
-  const snapshot = generateFakeSnapshot(size);
-  const start = performance.now();
+async function runReplicationBenchmarks() {
+  console.log("\n🔁 Benchmarking Replication Snapshot Import\n");
 
-  datastore.importSnapshot(snapshot);
+  const sizes = [1000, 10_000, 50_000];
+  for (const size of sizes) {
+    const snapshot = generateFakeSnapshot(size);
+    const start = performance.now();
 
-  const end = performance.now();
-  const duration = end - start;
-  console.log(
-    `Imported snapshot with ${size} keys in ${duration.toFixed(2)}ms (${(
-      size / duration
-    ).toFixed(2)} keys/ms)`
-  );
+    datastore.importSnapshot(snapshot);
+
+    const end = performance.now();
+    const duration = end - start;
+    console.log(
+      `Imported snapshot with ${size} keys in ${duration.toFixed(2)}ms (${(
+        size / duration
+      ).toFixed(2)} keys/ms)`
+    );
+  }
+
+  console.log("✅ Replication benchmarks completed.\n");
 }
 
-console.log("\n🔁 Benchmarking Replication Snapshot Import\n");
-benchmarkImportSnapshot(1000);
-benchmarkImportSnapshot(10_000);
-benchmarkImportSnapshot(50_000);
-console.log("✅ Replication benchmarks completed.\n");
+module.exports = { runReplicationBenchmarks };

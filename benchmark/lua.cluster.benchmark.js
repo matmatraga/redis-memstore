@@ -1,9 +1,9 @@
 const { runLuaScript } = require("../server/core/luaEngine");
 const cluster = require("../server/core/clusterManager");
 
-console.log("📊 Benchmarking Lua and Cluster");
+async function runLuaClusterBenchmarks() {
+  console.log("\n📊 Benchmarking Lua and Cluster");
 
-(async () => {
   console.time("Lua EVAL");
   const store = new Map();
   for (let i = 0; i < 1000; i++) {
@@ -18,4 +18,6 @@ console.log("📊 Benchmarking Lua and Cluster");
     cluster.getNodeForKey("key" + i);
   }
   console.timeEnd("Cluster Slot Resolution");
-})();
+}
+
+module.exports = { runLuaClusterBenchmarks };
