@@ -16,6 +16,7 @@ const cuckoo = require("../core/types/cuckoofilter");
 const timeseries = require("../core/types/timeseries");
 const vector = require("../core/types/vector");
 const documents = require("../core/types/documents");
+const { runLuaScript } = require("../core/luaEngine");
 const {
   incrementCommandCount,
   logIfSlow,
@@ -1254,6 +1255,23 @@ module.exports = async function routeCommandRaw({
           replicate(command, args);
         }
         return handler(args);
+      }
+
+      case "EVAL": {
+        if (args.length < 2) return "ERR wrong number of arguments for 'EVAL'";
+
+        const [scriptRaw, numKeysRaw, ...rest] = args;
+        const script = scriptRaw.startsWith('"')
+          ? scriptRaw.slice(1, -1)
+          : scriptRaw;
+        const numKeys = parseInt(numKeysRaw, 10);
+
+        if (isNaN(numKeys) || numKeys < 0) return "ERR invalid number of keys";
+
+        const keys = rest.slice(0, numKeys);
+        const argVals = rest.slice(numKeys);
+
+        return runLuaScript(script, keys, argVals, store);
       }
 
       default:

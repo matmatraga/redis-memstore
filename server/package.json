@@ -4,5 +4,9 @@
   },
   "scripts": {
     "test": "jest"
+  },
+  "dependencies": {
+    "shell-quote": "^1.8.3",
+    "vm2": "^3.9.19"
   }
 }

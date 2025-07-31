@@ -1,13 +1,9 @@
+const { parse } = require("shell-quote");
+
 function commandParser(input) {
-  const regex = /"([^"]*)"|'([^']*)'|[^\s]+/g;
-  const args = [];
-  let match;
-
-  while ((match = regex.exec(input))) {
-    args.push(match[1] || match[2] || match[0]);
-  }
-
-  const command = args.shift().toUpperCase();
+  const parts = parse(input);
+  const command = parts[0]?.toUpperCase();
+  const args = parts.slice(1);
   return { command, args };
 }
 
