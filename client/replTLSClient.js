@@ -3,7 +3,7 @@ const fs = require("fs");
 const readline = require("readline");
 
 const options = {
-  ca: fs.readFileSync("tls/cert.pem"),
+  ca: fs.readFileSync("/server/tls/cert.pem"),
   host: "127.0.0.1",
   port: 6380,
   rejectUnauthorized: false,
