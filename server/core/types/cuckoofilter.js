@@ -1,6 +1,5 @@
 // server/core/types/cuckoofilter.js
 const crypto = require("crypto");
-const { appendToAOF } = require("../../services/persistenceService");
 
 function hashFn(value) {
   return crypto.createHash("sha256").update(value).digest();
@@ -40,7 +39,6 @@ function reserve(
     capacity,
   };
 
-  appendToAOF(`CF.RESERVE ${key} ${capacity}`);
   store.set(key, data);
   return "OK";
 }
@@ -54,7 +52,6 @@ function add(store, key, item) {
   const i2 = i1 ^ indexHash(fp, data.capacity); // second bucket
 
   if (tryInsert(data, i1, fp) || tryInsert(data, i2, fp)) {
-    appendToAOF(`CF.ADD ${key} ${item}`);
     return 1;
   }
 
@@ -68,7 +65,6 @@ function add(store, key, item) {
 
     i = i ^ indexHash(evicted, data.capacity);
     if (tryInsert(data, i, evicted)) {
-      appendToAOF(`CF.ADD ${key} ${item}`);
       return 1;
     }
   }
@@ -89,7 +85,6 @@ function tryInsert(data, index, fingerprint) {
   }
   return false;
 }
-
 
 function exists(store, key, item) {
   const data = store.get(key);
@@ -116,14 +111,14 @@ function del(store, key, item) {
   const idx1 = data.buckets[i1].findIndex((f) => f.equals(fp));
   if (idx1 !== -1) {
     data.buckets[i1].splice(idx1, 1);
-    appendToAOF(`CF.DEL ${key} ${item}`);
+
     return 1;
   }
 
   const idx2 = data.buckets[i2].findIndex((f) => f.equals(fp));
   if (idx2 !== -1) {
     data.buckets[i2].splice(idx2, 1);
-    appendToAOF(`CF.DEL ${key} ${item}`);
+
     return 1;
   }
 

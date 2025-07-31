@@ -5,7 +5,6 @@ const {
   euclideanDistance,
   cosineSimilarity,
 } = require("../../utils/vectorUtils");
-const { logAOF } = require("../../services/persistenceService");
 const {
   addToIndex,
   removeFromIndex,
@@ -37,7 +36,6 @@ function set(args) {
   }
 
   store.set(key, { type: "vector", value: vec });
-  logAOF(`VECTOR.SET ${key} [${vec.join(",")}]`);
   return "OK";
 }
 

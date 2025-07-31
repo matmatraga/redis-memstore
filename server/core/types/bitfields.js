@@ -1,6 +1,5 @@
 const store = require("../datastore");
 const { parseBitfieldType } = require("../../network/commandParser");
-const { logAOF } = require("../../services/persistenceService");
 
 function handle(store, key, subcommands) {
   const results = [];
@@ -21,7 +20,6 @@ function handle(store, key, subcommands) {
       const valueStr = subcommands[i + 3];
       if (!type || !offsetStr || !valueStr) throw new Error("ERR syntax error");
       results.push(set(store, key, type, offsetStr, parseInt(valueStr)));
-      logAOF("BITFIELD", [key, "SET", type, offsetStr, valueStr]);
       i += 4;
     } else if (op === "INCRBY") {
       const type = subcommands[i + 1];
@@ -30,7 +28,6 @@ function handle(store, key, subcommands) {
       if (!type || !offsetStr || !incrementStr)
         throw new Error("ERR syntax error");
       results.push(incrby(store, key, type, offsetStr, parseInt(incrementStr)));
-      logAOF("BITFIELD", [key, "INCRBY", type, offsetStr, incrementStr]);
       i += 4;
     } else {
       throw new Error(

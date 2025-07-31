@@ -1,6 +1,4 @@
 // server/core/types/timeseries.js
-const { appendToAOF } = require("../../services/persistenceService");
-
 function create(store, key, ...args) {
   if (store.has(key)) return "ERR key already exists";
 
@@ -13,7 +11,6 @@ function create(store, key, ...args) {
   }
 
   store.set(key, { data: [], retention });
-  appendToAOF(`TS.CREATE ${key}${retention ? " RETENTION " + retention : ""}`);
   return "OK";
 }
 
@@ -34,7 +31,6 @@ function add(store, key, timestampStr, valueStr) {
     series.data = series.data.filter(([ts]) => ts >= cutoff);
   }
 
-  appendToAOF(`TS.ADD ${key} ${timestamp} ${value}`);
   return timestamp.toString();
 }
 

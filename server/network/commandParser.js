@@ -8,17 +8,15 @@ function commandParser(input) {
     const token = parts[i];
 
     if (typeof token === "object" && token.op === ">") {
-      // Merge '>' operator with the next token
       if (i + 1 < parts.length && typeof parts[i + 1] === "string") {
         mergedParts.push(">" + parts[i + 1]);
-        i++; // skip next token because merged
+        i++;
       } else {
-        mergedParts.push(">"); // fallback if no next token
+        mergedParts.push(">");
       }
     } else if (typeof token === "string") {
       mergedParts.push(token);
     } else {
-      // convert other objects to string safely
       mergedParts.push(String(token));
     }
   }

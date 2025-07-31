@@ -1073,7 +1073,48 @@ module.exports = async function routeCommandRaw({
 
         try {
           if (isMaster) replicate(command, args);
-          return bitfields.handle(store, key, subcommands);
+          const result = bitfields.handle(store, key, subcommands);
+
+          // Append to AOF here after successful execution
+          if (isMaster) {
+            // Append each subcommand separately
+            // Because BITFIELD can have multiple subcommands (GET, SET, INCRBY)
+            let i = 0;
+            while (i < subcommands.length) {
+              const op = subcommands[i]?.toUpperCase();
+              if (op === "GET") {
+                i += 3; // GET key type offset — no AOF since it's read-only
+              } else if (op === "SET") {
+                const type = subcommands[i + 1];
+                const offsetStr = subcommands[i + 2];
+                const valueStr = subcommands[i + 3];
+                appendToAOF("BITFIELD", [
+                  key,
+                  "SET",
+                  type,
+                  offsetStr,
+                  valueStr,
+                ]);
+                i += 4;
+              } else if (op === "INCRBY") {
+                const type = subcommands[i + 1];
+                const offsetStr = subcommands[i + 2];
+                const incrementStr = subcommands[i + 3];
+                appendToAOF("BITFIELD", [
+                  key,
+                  "INCRBY",
+                  type,
+                  offsetStr,
+                  incrementStr,
+                ]);
+                i += 4;
+              } else {
+                i++; // unknown subcommand, just skip or throw error earlier
+              }
+            }
+          }
+
+          return result;
         } catch (err) {
           return `ERR ${err.message}`;
         }
@@ -1158,13 +1199,22 @@ module.exports = async function routeCommandRaw({
       case "CF.RESERVE": {
         const [key, capacityStr] = args;
         if (!key || !capacityStr) return "ERR wrong number of arguments";
-        return cuckoo.reserve(store, key, capacityStr);
+        const result = cuckoo.reserve(store, key, capacityStr);
+        if (isMaster && result === "OK") {
+          appendToAOF("CF.RESERVE", [key, capacityStr]);
+        }
+        return result;
       }
       case "CF.ADD": {
         const [key, item] = args;
         if (!key || !item) return "ERR wrong number of arguments";
         if (isMaster) replicate("CF.ADD", [key, item]);
-        return cuckoo.add(store, key, item);
+        const result = cuckoo.add(store, key, item);
+        if (isMaster && result === 1) {
+          // success returns 1
+          appendToAOF("CF.ADD", [key, item]);
+        }
+        return result;
       }
       case "CF.EXISTS": {
         const [key, item] = args;
@@ -1175,16 +1225,35 @@ module.exports = async function routeCommandRaw({
         const [key, item] = args;
         if (!key || !item) return "ERR wrong number of arguments";
         if (isMaster) replicate(command, args);
-        return cuckoo.del(store, key, item);
+        const result = cuckoo.del(store, key, item);
+        if (isMaster && result === 1) {
+          appendToAOF("CF.DEL", [key, item]);
+        }
+        return result;
       }
 
       // Time Series
-
       case "TS.CREATE": {
-        const [key] = args;
+        const [key, ...args] = args;
         if (!key) return "ERR wrong number of arguments for 'TS.CREATE'";
         if (isMaster) replicate(command, args);
-        return timeseries.create(store, key);
+        const result = timeseries.create(store, key, ...args);
+        if (isMaster && result === "OK") {
+          // Include retention if provided
+          const retentionArgIndex = args.findIndex(
+            (arg) => arg.toUpperCase() === "RETENTION"
+          );
+          if (retentionArgIndex !== -1 && args.length > retentionArgIndex + 1) {
+            appendToAOF("TS.CREATE", [
+              key,
+              "RETENTION",
+              args[retentionArgIndex + 1],
+            ]);
+          } else {
+            appendToAOF("TS.CREATE", [key]);
+          }
+        }
+        return result;
       }
 
       case "TS.ADD": {
@@ -1192,14 +1261,17 @@ module.exports = async function routeCommandRaw({
         if (!key || !timestamp || !value)
           return "ERR wrong number of arguments for 'TS.ADD'";
         if (isMaster) replicate("TS.ADD", [key, timestamp, value]);
-        return timeseries.add(store, key, timestamp, value);
+        const result = timeseries.add(store, key, timestamp, value);
+        if (isMaster && !result.toLowerCase().startsWith("err")) {
+          appendToAOF("TS.ADD", [key, timestamp, value]);
+        }
+        return result;
       }
 
       case "TS.RANGE": {
         const [key, from, to, ...rest] = args;
         if (!key || !from || !to) return "ERR wrong number of arguments";
 
-        // Optional aggregation parsing
         if (rest.length === 0) {
           return timeseries.range(store, key, from, to);
         }
@@ -1240,7 +1312,11 @@ module.exports = async function routeCommandRaw({
         const [key, vectorString] = args;
         if (!key || !vectorString)
           return "ERR wrong number of arguments for 'VECTOR.SET'";
-        return vector.set(args);
+        const result = vector.set(args);
+        if (isMaster && result === "OK") {
+          appendToAOF("VECTOR.SET", args);
+        }
+        return result;
       }
 
       case "VECTOR.GET": {
