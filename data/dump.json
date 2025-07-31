@@ -1,0 +1,16 @@
+{
+  "data": {
+    "foo": "value",
+    "temp:manila": {
+      "data": [
+        [
+          1723023123000,
+          28.3
+        ]
+      ],
+      "retention": null
+    },
+    "key1": "val1"
+  },
+  "expirations": {}
+}

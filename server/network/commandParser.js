@@ -2,8 +2,29 @@ const { parse } = require("shell-quote");
 
 function commandParser(input) {
   const parts = parse(input);
-  const command = parts[0]?.toUpperCase();
-  const args = parts.slice(1);
+  const mergedParts = [];
+
+  for (let i = 0; i < parts.length; i++) {
+    const token = parts[i];
+
+    if (typeof token === "object" && token.op === ">") {
+      // Merge '>' operator with the next token
+      if (i + 1 < parts.length && typeof parts[i + 1] === "string") {
+        mergedParts.push(">" + parts[i + 1]);
+        i++; // skip next token because merged
+      } else {
+        mergedParts.push(">"); // fallback if no next token
+      }
+    } else if (typeof token === "string") {
+      mergedParts.push(token);
+    } else {
+      // convert other objects to string safely
+      mergedParts.push(String(token));
+    }
+  }
+
+  const command = mergedParts[0]?.toUpperCase();
+  const args = mergedParts.slice(1);
   return { command, args };
 }
 

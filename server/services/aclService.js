@@ -64,7 +64,9 @@ function aclSetUser(args) {
     enabled: false,
   };
 
-  for (const token of rest) {
+  for (const rawToken of rest) {
+    const token = String(rawToken);
+
     if (token === "on") user.enabled = true;
     else if (token === "off") user.enabled = false;
     else if (token.startsWith(">")) user.password = token.slice(1);
@@ -73,7 +75,7 @@ function aclSetUser(args) {
       user.commands.add(token.slice(1).toUpperCase());
     else if (token.startsWith("-"))
       user.commands.delete(token.slice(1).toUpperCase());
-    else return `ERR unknown token: ${token}`;
+    else return `ERR invalid token: ${token}`;
   }
 
   users.set(username, user);

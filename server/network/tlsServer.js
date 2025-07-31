@@ -50,6 +50,19 @@ function startTLSServer(port = 6380) {
       rl.prompt();
     });
 
+    rl.on("error", (err) => {
+      console.warn("[Readline error]", err.message);
+      rl.close();
+    });
+
+    socket.on("error", (err) => {
+      if (err.code === "ECONNRESET") {
+        console.warn("[Socket ECONNRESET] Client disconnected abruptly");
+      } else {
+        console.error("[Socket error]", err);
+      }
+    });
+
     socket.on("close", () => {
       unregisterClient(clientId);
       socketRegistry.unregister(clientId);

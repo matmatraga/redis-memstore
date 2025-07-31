@@ -4,8 +4,8 @@ const path = require("path");
 const store = require("../core/datastore");
 const { getRole } = require("../services/replicationService");
 
-const AOF_PATH = path.join(__dirname, "../data/appendonly.aof");
-const SNAPSHOT_FILE = path.join(__dirname, "../data/dump.json");
+const AOF_PATH = path.join(__dirname, "../../data/appendonly.aof");
+const SNAPSHOT_FILE = path.join(__dirname, "../../data/dump.json");
 
 let isReplayingAOF = false;
 
