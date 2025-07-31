@@ -16,6 +16,7 @@ const cuckoo = require("../core/types/cuckoofilter");
 const timeseries = require("../core/types/timeseries");
 const vector = require("../core/types/vector");
 const documents = require("../core/types/documents");
+const cluster = require("../core/clusterManager");
 const { runLuaScript } = require("../core/luaEngine");
 const {
   incrementCommandCount,
@@ -1272,6 +1273,28 @@ module.exports = async function routeCommandRaw({
         const argVals = rest.slice(numKeys);
 
         return runLuaScript(script, keys, argVals, store);
+      }
+
+      // Cluster
+      case "CLUSTER": {
+        const subcommand = args[0]?.toUpperCase();
+
+        switch (subcommand) {
+          case "KEYSLOT": {
+            if (args.length !== 2)
+              return "ERR wrong number of arguments for 'CLUSTER KEYSLOT'";
+            return cluster.getSlotForKey(args[1]);
+          }
+
+          case "SLOTS": {
+            const slots = cluster.getClusterSlots();
+            return slots.map(
+              (entry) => `${entry.nodeId} [${entry.slots[0]}-${entry.slots[1]}]`
+            );
+          }
+          default:
+            return `ERR unknown subcommand '${subcommand}' for CLUSTER`;
+        }
       }
 
       default:
