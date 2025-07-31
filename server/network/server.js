@@ -13,6 +13,7 @@ const {
   handleSlaveConnection,
 } = require("../services/replicationService");
 const aclService = require("../services/aclService");
+const socketRegistry = require("./socketRegistry");
 const { registerClient, unregisterClient } = require("../core/monitoring");
 const { redisPassword } = require("../config");
 
@@ -43,6 +44,7 @@ function startTCPServer(port = 6379) {
     const server = net.createServer((socket) => {
       const clientId = `${socket.remoteAddress}:${socket.remotePort}`;
       registerClient(clientId);
+      socketRegistry.register(clientId, socket);
       authStatus.set(socket, !redisPassword);
 
       socket.write(
@@ -100,6 +102,7 @@ function startTCPServer(port = 6379) {
 
           socket.on("close", () => {
             unregisterClient(clientId);
+            socketRegistry.unregister(clientId);
             rl.close();
             authStatus.delete(socket);
           });
