@@ -17,3 +17,5 @@ SET foo bar
 GEOADD locations 121.036 14.613 manila
 GEOADD locations 121.033 14.554 makati
 GEOADD locations 121.043 14.676 quezon
+TS.CREATE temp:manila
+TS.ADD temp:manila 1723023123000 28.3

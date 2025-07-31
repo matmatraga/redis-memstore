@@ -1,10 +1,19 @@
 // server/core/types/timeseries.js
 const { appendToAOF } = require("../../services/persistenceService");
 
-function create(store, key) {
+function create(store, key, ...args) {
   if (store.has(key)) return "ERR key already exists";
-  store.set(key, { data: [] });
-  appendToAOF(`TS.CREATE ${key}`);
+
+  let retention = null;
+  if (args.length === 2 && args[0].toUpperCase() === "RETENTION") {
+    const retentionVal = parseInt(args[1], 10);
+    if (isNaN(retentionVal) || retentionVal <= 0)
+      return "ERR invalid retention value";
+    retention = retentionVal;
+  }
+
+  store.set(key, { data: [], retention });
+  appendToAOF(`TS.CREATE ${key}${retention ? " RETENTION " + retention : ""}`);
   return "OK";
 }
 
@@ -18,6 +27,12 @@ function add(store, key, timestampStr, valueStr) {
   const series = store.get(key);
   series.data.push([timestamp, value]);
   series.data.sort((a, b) => a[0] - b[0]); // keep ordered
+
+  // Retention logic
+  if (series.retention) {
+    const cutoff = timestamp - series.retention;
+    series.data = series.data.filter(([ts]) => ts >= cutoff);
+  }
 
   appendToAOF(`TS.ADD ${key} ${timestamp} ${value}`);
   return timestamp.toString();
