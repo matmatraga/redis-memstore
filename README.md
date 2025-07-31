@@ -47,6 +47,19 @@ redis-like-master/
 
 ## 🚀 Getting Started
 
+### Prerequisites
+
+- Node.js v20 or higher
+- npm (Node Package Manager)
+
+### Installation
+
+```bash
+git clone https://github.com/yourusername/redis-like.git
+cd redis-like
+npm install
+```
+
 ```bash
 # Start the server
 node server/index.js
@@ -73,7 +86,7 @@ npm test tests/json.test.js
 ## 📊 Run Benchmarks
 
 ```bash
-node benchmark/benchmark.js                  # General performance
+node benchmark/benchmark.js                 # General performance
 node benchmark/mlInterface.benchmark.js     # Vector IO benchmark
 ```
 
@@ -104,5 +117,11 @@ This project completes all 22 phases as outlined:
 
 Matthew Ramon Raga  
 Full Stack MERN Developer
+
+---
+
+## 🤝 Contribution
+
+Contributions are welcome! Feel free to fork the repository, submit issues, or create pull requests.
 
 ---
