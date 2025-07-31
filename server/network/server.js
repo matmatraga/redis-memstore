@@ -16,8 +16,11 @@ const aclService = require("../services/aclService");
 const socketRegistry = require("./socketRegistry");
 const { registerClient, unregisterClient } = require("../core/monitoring");
 const { redisPassword } = require("../config");
+const cluster = require("../core/clusterManager");
 
 const authStatus = new Map();
+
+cluster.assignSlots(["node-1", "node-2"]);
 function replayAOF() {
   const commands = loadAOF();
   console.log(`🔁 Replaying ${commands.length} AOF commands...`);
