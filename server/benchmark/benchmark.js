@@ -1,14 +1,14 @@
 const { performance } = require("perf_hooks");
 const handleCommand = require("../network/commandRouter");
+const pubsub = require("../services/pubsubService");
 
 const totalOps = 100000;
 
 async function benchmarkCommand(command, argsFactory) {
   const start = performance.now();
-
   for (let i = 0; i < totalOps; i++) {
     const args = argsFactory(i);
-    await handleCommand(command, args);
+    await handleCommand({ command, args });
   }
 
   const end = performance.now();
@@ -124,11 +124,12 @@ async function benchmarkCommand(command, argsFactory) {
   const iterations = 1000;
   const txStart = performance.now();
   for (let i = 0; i < iterations; i++) {
-    await handleCommand("MULTI", []);
-    await handleCommand("SET", [`txkey${i}`, `${i}`]);
-    await handleCommand("INCR", [`txkey${i}`]);
-    await handleCommand("EXEC", []);
+    await handleCommand({ command: "MULTI", args: [] });
+    await handleCommand({ command: "SET", args: [`txkey${i}`, `${i}`] });
+    await handleCommand({ command: "INCR", args: [`txkey${i}`] });
+    await handleCommand({ command: "EXEC", args: [] });
   }
+
   const txEnd = performance.now();
   const txDuration = txEnd - txStart;
   const txOpsPerSec = (iterations / txDuration) * 1000;
@@ -141,30 +142,19 @@ async function benchmarkCommand(command, argsFactory) {
   // Pub/Sub
   console.log("\n⏱️ Benchmarking Pub/Sub messaging");
 
+  // Subscribe once to test channel
   let received = 0;
   const subscriber = () => received++;
 
-  // Subscribe once to test channel
-  await handleCommand("SUBSCRIBE", ["bench-channel"]);
-  const pubsub = require("../services/pubsubService");
   pubsub.subscribe("bench-channel", subscriber);
 
-  const pubStart = performance.now();
+  console.time("Pub/Sub");
   for (let i = 0; i < totalOps; i++) {
-    await handleCommand("PUBLISH", ["bench-channel", "message" + i]);
+    pubsub.publish("bench-channel", "message" + i);
   }
-  const pubEnd = performance.now();
+  console.timeEnd("Pub/Sub");
 
   pubsub.unsubscribe("bench-channel", subscriber);
-
-  const pubDuration = pubEnd - pubStart;
-  const pubOpsPerSec = (totalOps / pubDuration) * 1000;
-
-  console.log(
-    `PUBLISH - Executed ${totalOps} messages in ${pubDuration.toFixed(
-      2
-    )}ms => ${pubOpsPerSec.toFixed(2)} msg/sec`
-  );
   console.log(`Received: ${received}/${totalOps} messages`);
 
   // Monitoring & Management
@@ -208,7 +198,7 @@ async function benchmarkCommand(command, argsFactory) {
     "$.skills",
     "Redis",
   ]);
-  await handleCommand("DOC.INDEX", ["age"]);
+  await handleCommand({ command: "DOC.INDEX", args: ["age"] });
   await benchmarkCommand("DOC.FIND", (i) => [
     "age",
     ((i % 100) + 1).toString(),

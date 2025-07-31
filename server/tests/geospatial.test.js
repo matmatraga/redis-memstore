@@ -28,4 +28,22 @@ describe("Geospatial Commands", () => {
     expect(res).toContain("KualaLumpur");
     expect(res).not.toContain("Bangkok");
   });
+
+  test("GEOSEARCH supports WITHDIST, WITHCOORD, and ASC sorting", () => {
+    geo.geoadd(store, "places", 121.036, 14.613, "Manila");
+    geo.geoadd(store, "places", 121.033, 14.554, "Makati");
+    geo.geoadd(store, "places", 121.043, 14.676, "Quezon");
+
+    const result = geo.geosearch(store, "places", "Manila", 10000, "m", {
+      withDist: true,
+      withCoord: true,
+      sort: "ASC",
+    });
+
+    expect(Array.isArray(result)).toBe(true);
+    expect(result.length).toBe(2); // Makati and Quezon
+    expect(result[0][0]).toBe("Makati");
+    expect(result[0][1]).toBeDefined(); // distance
+    expect(result[0][2]).toEqual([121.033, 14.554]);
+  });
 });

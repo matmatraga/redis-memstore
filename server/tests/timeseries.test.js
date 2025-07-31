@@ -62,4 +62,16 @@ describe("Time Series", () => {
       [200, 35],
     ]);
   });
+
+  test("TS.ADD respects retention policy", () => {
+    const now = Date.now();
+    timeseries.create(store, "retained", "RETENTION", "10000");
+
+    timeseries.add(store, "retained", (now - 20000).toString(), "20.0");
+    timeseries.add(store, "retained", now.toString(), "25.0");
+
+    const data = timeseries.range(store, "retained", now - 30000, now + 10000);
+    expect(data.length).toBe(1);
+    expect(data[0][1]).toBe(25.0);
+  });
 });

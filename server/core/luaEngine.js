@@ -10,9 +10,7 @@ function runLuaScript(script, keys, args, datastore) {
 
   // Assign directly in sandbox to avoid closure
   sandbox.redis.get = (key) => {
-    console.log("🧪 redis.get key =", key);
     const val = datastore.get(key);
-    console.log("🧪 datastore.get(key) returned =", val);
     return val;
   };
 
