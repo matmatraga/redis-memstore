@@ -1,6 +1,15 @@
 {
   "data": {
-    "foo": "bar"
+    "foo": "bar",
+    "temp:manila": {
+      "data": [
+        [
+          1723023123000,
+          28.3
+        ]
+      ],
+      "retention": null
+    }
   },
   "expirations": {}
 }
