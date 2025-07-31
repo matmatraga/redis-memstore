@@ -25,16 +25,31 @@ const geo = {
     return parseFloat(haversine(lon1, lat1, lon2, lat2, unit).toFixed(4));
   },
 
-  geosearch(store, key, fromMember, radius, unit = "m") {
+  geosearch(store, key, fromMember, radius, unit = "m", options = {}) {
     if (!store[key] || !store[key][fromMember]) return [];
     const [lon1, lat1] = store[key][fromMember];
-    return Object.entries(store[key])
-      .filter(
-        ([member, [lon2, lat2]]) =>
-          member !== fromMember &&
-          haversine(lon1, lat1, lon2, lat2, unit) <= parseFloat(radius)
-      )
-      .map(([member]) => member);
+
+    let results = Object.entries(store[key])
+      .filter(([member, [lon2, lat2]]) => {
+        if (member === fromMember) return false;
+        const dist = haversine(lon1, lat1, lon2, lat2, unit);
+        return dist <= parseFloat(radius);
+      })
+      .map(([member, [lon2, lat2]]) => {
+        const dist = haversine(lon1, lat1, lon2, lat2, unit).toFixed(4);
+        const entry = [member];
+        if (options.withDist) entry.push(dist);
+        if (options.withCoord) entry.push([lon2, lat2]);
+        return entry.length === 1 ? entry[0] : entry;
+      });
+
+    if (options.sort === "ASC") {
+      results.sort((a, b) => parseFloat(a[1] || 0) - parseFloat(b[1] || 0));
+    } else if (options.sort === "DESC") {
+      results.sort((a, b) => parseFloat(b[1] || 0) - parseFloat(a[1] || 0));
+    }
+
+    return results;
   },
 };
 

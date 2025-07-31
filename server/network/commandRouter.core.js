@@ -1016,13 +1016,21 @@ module.exports = async function routeCommandRaw({
       }
 
       case "GEOSEARCH": {
-        const [key, fromKeyword, fromMember, byKeyword, radiusStr, unit = "m"] =
-          args;
+        const [
+          key,
+          fromKeyword,
+          fromMember,
+          byKeyword,
+          radiusStr,
+          unitOrFlag,
+          ...rest
+        ] = args;
+
         if (
           !key ||
-          fromKeyword !== "FROMMEMBER" ||
+          fromKeyword?.toUpperCase() !== "FROMMEMBER" ||
           !fromMember ||
-          byKeyword !== "BYRADIUS" ||
+          byKeyword?.toUpperCase() !== "BYRADIUS" ||
           !radiusStr
         )
           return "ERR syntax error";
@@ -1030,8 +1038,26 @@ module.exports = async function routeCommandRaw({
         const radius = parseFloat(radiusStr);
         if (isNaN(radius)) return "ERR invalid radius";
 
+        let unit = "m";
+        const flags = [];
+
+        if (unitOrFlag && ["m", "km", "mi", "ft"].includes(unitOrFlag)) {
+          unit = unitOrFlag;
+          flags.push(...rest);
+        } else {
+          flags.push(unitOrFlag, ...rest);
+        }
+
+        const options = {
+          withDist: flags.includes("WITHDIST"),
+          withCoord: flags.includes("WITHCOORD"),
+        };
+
+        if (flags.includes("ASC")) options.sort = "ASC";
+        if (flags.includes("DESC")) options.sort = "DESC";
+
         try {
-          return geo.geosearch(store, key, fromMember, radius, unit);
+          return geo.geosearch(store, key, fromMember, radius, unit, options);
         } catch (err) {
           return `ERR ${err.message}`;
         }
